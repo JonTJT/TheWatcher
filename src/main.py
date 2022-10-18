@@ -16,9 +16,8 @@ def countFiles(filepath):
 def updateTimer(window, starttime):
     global investigationActive
     while investigationActive:
-        print(starttime)
         currenttime = int(round(time.time() * 100)) - starttime
-        window['TimeElapsed'].update('Time elapsed: {:02d}:{:02d}.{:02d}'.format((currenttime // 100) // 60,(currenttime // 100) % 60,currenttime % 100))
+        window['TimeElapsed'].update('Time elapsed: {:02d}:{:02d}'.format((currenttime // 100) // 60,(currenttime // 100) % 60))
 
 InvestigationHeader = [
     [gui.Button('Events'), gui.Button('Files')],
@@ -34,11 +33,9 @@ FileLog = [
     [gui.Text("This is the file log page.")],
 ]
 
-
 EventLog = [
     [gui.Text("This is the event log page.")],
 ]
-
 
 MainMenu = [
     [gui.Text("Select the hard drive/ folder that will be investigated.")],
@@ -48,7 +45,6 @@ MainMenu = [
 
 ProgramController = [
     [gui.Column(MainMenu, key='MainMenu'),gui.Column(InvestigationHeader, visible=False, key='InvestigationHeader') ,gui.Column(FileLog, visible=False, key='FileLog'), gui.Column(EventLog, visible=False, key='EventLog')],
-    #[gui.Column(layout1, key='-COL1-'), gui.Column(layout2, visible=False, key='-COL2-'), gui.Column(layout3, visible=False, key='-COL3-')], [gui.Button('Cycle Layout'), gui.Button('1'), gui.Button('2'), gui.Button('3'), gui.Button('Exit')],
 ]
 
 window = gui.Window("The Watcher", ProgramController)
