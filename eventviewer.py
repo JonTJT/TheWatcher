@@ -1,16 +1,36 @@
 import PySimpleGUI as gui
+import threading
+
+# def updateTable(window, filelist, testlist_headings):
+#     """Threading: Function to update the filelist"""
+#     window["-TABLE-"].update(gui.Table(values=filelist,
+#                                         headings=testlist_headings,
+#                                         max_col_width=100,
+#                                         auto_size_columns=True,
+#                                         display_row_numbers=False,
+#                                         justification="right",
+#                                         num_rows=10,
+#                                         key="-TABLE-",
+#                                         row_height=35))
+
+
+def appendToList(window, the_list):
+    """Testing if I can add stuff to the list"""
+    the_list.append(["test", "test", "test", "test", "test"])
+    window["-TABLE-"].update(values=the_list)
+
 
 
 def main():
     gui.theme('DarkAmber')
 
-    testarray = [
+    testlist = [
         ["fuck", "this", "shit", "im", "out"],
         ["coffee", "tea", "whiskey", "and", "me"],
         ["ded", "meeeep", "one espresso depresso please thankyou", "meat bicycle", "chocolate milo shake"]
     ]
 
-    testarray_headings = ["Time", "Filename", "Action", "Notes", "View Change"]
+    testlist_headings = ["Time", "Filename", "Action", "Notes", "View Change"]
 
     top_row = [
         [gui.Text("Files Investigated ??/??"),
@@ -22,30 +42,15 @@ def main():
         [gui.Button("Events"), gui.Button("Files")]
     ]
 
-    some_column = [
-        [gui.Text("testing column")]
-    ]
-
-    other_column = [
-        [gui.Text("testing column 2")]
-    ]
-
     confirm_row = [
-        [gui.Button('Ok'), gui.Button('Cancel')]
+        [gui.Button('Ok'), gui.Button('Cancel'), gui.Button("Append"), gui.Button("Print"), gui.Button("Update")]
     ]
 
     layout = [
-        top_row,
-        tab_selector,
-        # [
-        #     gui.Column(some_column),
-        #     gui.VSeperator(),
-        #     gui.Column(other_column),
-        #     gui.VSeperator(),
-        #     gui.Column([[gui.Text("TEST")]])
-        # ],
-        [gui.Table(values=testarray,
-                   headings=testarray_headings,
+        # top_row,
+        # tab_selector,
+        [gui.Table(values=testlist,
+                   headings=testlist_headings,
                    max_col_width=100,
                    auto_size_columns=True,
                    display_row_numbers=False,
@@ -53,7 +58,9 @@ def main():
                    num_rows=10,
                    key="-TABLE-",
                    row_height=35)],
-        confirm_row
+        
+        [gui.Button('Ok'), gui.Button('Cancel'), gui.Button("Append"), gui.Button("Print"), gui.Button("Update")]
+        
     ]
 
     window = gui.Window("Window Title", layout)
@@ -61,6 +68,17 @@ def main():
         event, values = window.read()
         if event == gui.WIN_CLOSED or event == "Cancel":
             break
+        if event == "Append":
+            appendToList(window, testlist)
+            print("Appending...")
+        
+        # if event == "Update":
+        #     event_thread = threading.Thread(target=updateTable, args=(window, testlist, testlist_headings))
+        #     event_thread.start()
+
+        # DEBUGGING
+        # if event == "Print":
+        #     print(testlist)
 
 
     window.close()
