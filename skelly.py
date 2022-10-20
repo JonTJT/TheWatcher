@@ -25,6 +25,10 @@ def updateTimer(window, starttime):
         currenttime = int(round(time.time() * 100)) - starttime
         window['TimeElapsed'].update('Time elapsed: {:02d}:{:02d}'.format((currenttime // 100) // 60,(currenttime // 100) % 60))
 
+
+# Theme
+gui.theme('DarkAmber')
+
 InvestigationHeader = [
     [gui.Button('Events'), gui.Button('Files')],
     [gui.Text(key = "FileCount")],
@@ -57,7 +61,7 @@ EventLog = [
                    num_rows=10,
                    key="-TABLE-",
                    row_height=35)],
-        [gui.Button('Ok'), gui.Button('Cancel'), gui.Button("Append"), gui.Button("Print"), gui.Button("Update")]
+        [gui.Button("Append")]
         
     ]
 
@@ -68,7 +72,8 @@ MainMenu = [
 ]
 
 ProgramController = [
-    [gui.Column(MainMenu, key='MainMenu'),gui.Column(InvestigationHeader, visible=False, key='InvestigationHeader') ,gui.Column(FileLog, visible=False, key='FileLog'), gui.Column(EventLog, visible=False, key='EventLog')],
+    [gui.Column(MainMenu, key='MainMenu'),gui.Column(InvestigationHeader, visible=False, key='InvestigationHeader')],
+    [gui.Column(FileLog, visible=False, key='FileLog'), gui.Column(EventLog, visible=False, key='EventLog')]
 ]
 
 window = gui.Window("The Watcher", ProgramController)
@@ -81,6 +86,7 @@ totalfilecount = 0
 # Counter for investigated files
 filecount = 0
 currenttime = 0
+
 
 while True:
     event, values = window.read()
