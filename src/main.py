@@ -6,6 +6,12 @@ from datetime import datetime
 import time
 import threading
 
+def appendToList(window, the_list):
+    """Append to file list, then update the window"""
+    the_list.append(["test", "test", "test", "test", "test"])
+    window["-TABLE-"].update(values=the_list)
+    
+
 def countFiles(filepath):
     counter = 0
     for path in os.listdir(filepath):
@@ -18,6 +24,10 @@ def updateTimer(window, starttime):
     while investigationActive:
         currenttime = int(round(time.time() * 100)) - starttime
         window['TimeElapsed'].update('Time elapsed: {:02d}:{:02d}'.format((currenttime // 100) // 60,(currenttime // 100) % 60))
+
+
+# Theme
+gui.theme('DarkAmber')
 
 InvestigationHeader = [
     [gui.Button('Events'), gui.Button('Files')],
@@ -33,9 +43,27 @@ FileLog = [
     [gui.Text("This is the file log page.")],
 ]
 
+filelist = [
+        ["fuck", "this", "shit", "im", "out"],
+        ["coffee", "tea", "whiskey", "and", "me"],
+        ["ded", "meeeep", "one espresso depresso please thankyou", "meat bicycle", "chocolate milo shake"]
+    ]
+
+filelist_headings = ["Time", "Filename", "Action", "Notes", "View Change"]
+
 EventLog = [
-    [gui.Text("This is the event log page.")],
-]
+        [gui.Table(values=filelist,
+                   headings=filelist_headings,
+                   max_col_width=100,
+                   auto_size_columns=True,
+                   display_row_numbers=False,
+                   justification="right",
+                   num_rows=10,
+                   key="-TABLE-",
+                   row_height=35)],
+        [gui.Button("Append")]
+        
+    ]
 
 MainMenu = [
     [gui.Text("Select the hard drive/ folder that will be investigated.")],
@@ -44,7 +72,8 @@ MainMenu = [
 ]
 
 ProgramController = [
-    [gui.Column(MainMenu, key='MainMenu'),gui.Column(InvestigationHeader, visible=False, key='InvestigationHeader') ,gui.Column(FileLog, visible=False, key='FileLog'), gui.Column(EventLog, visible=False, key='EventLog')],
+    [gui.Column(MainMenu, key='MainMenu'),gui.Column(InvestigationHeader, visible=False, key='InvestigationHeader')],
+    [gui.Column(FileLog, visible=False, key='FileLog'), gui.Column(EventLog, visible=False, key='EventLog')]
 ]
 
 window = gui.Window("The Watcher", ProgramController)
@@ -95,5 +124,9 @@ while True:
     if event in (gui.WINDOW_CLOSED, "End investigation"):
         investigationActive = False
         break
+
+    # Temporary button to show appending to list. Should be removed in final version.
+    if event == "Append":
+        appendToList(window, filelist)
 
 window.close()
