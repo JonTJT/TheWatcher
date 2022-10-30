@@ -1,16 +1,77 @@
-from genericpath import isfile
-from tracemalloc import start
-import PySimpleGUI as gui
-import os
-from datetime import datetime
+import tkinter as tk
+from tkinter import filedialog
 import time
+import os
 import threading
+from datetime import datetime
 
-def appendToList(window, the_list):
-    """Append to file list, then update the window"""
-    the_list.append(["test", "test", "test", "test", "test"])
-    window["-TABLE-"].update(values=the_list)
-    
+class MainMenu(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        tk.Label(self,text="Select the folder that will be used in the investigation.").pack(fill="both", expand=True)
+        tk.Label(self,textvariable= controller.selectedFolder).pack(fill="both", expand=True)
+        tk.Button(self,text="Select Folder", command=lambda:[BeginInvestigation(controller)]).pack(fill="both", expand=True)
+        tk.Button(self,text="Begin Investigation", command=lambda:[controller.ShowFrame(EventLog)]).pack(fill="both", expand=True)
+
+class EventLog(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        tk.Button(self,text="View Event Log", command=lambda:[controller.ShowFrame(EventLog)]).pack(fill="both", expand=True)
+        tk.Button(self,text="View File Log", command=lambda:[controller.ShowFrame(FileLog)]).pack(fill="both", expand=True)
+        Title = tk.Label(self, text="Event Log").pack(fill="both", expand=True)
+        tk.Label(self,textvariable= controller.totalFileCount).pack(fill="both", expand=True)
+        tk.Label(self,textvariable= controller.selectedFolder).pack(fill="both", expand=True)
+        tk.Label(self,textvariable= controller.startTime).pack(fill="both", expand=True)
+
+        # Timer to track investigation
+        tk.Label(self,textvariable= controller.timer).pack(fill="both", expand=True)
+        tk.Button(self,text="End Investigation", command=lambda:[EndInvestigation(controller)]).pack(fill="both", expand=True)
+        
+class FileLog(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        Title = tk.Label(self, text="File Log").pack(fill="both", expand=True)
+
+class Report(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        Title = tk.Label(self, text="Investigation Report").pack(fill="both", expand=True)
+
+class Windows(tk.Tk):
+    def __init__(self, *args, **kwargs):
+        tk.Tk.__init__(self, *args, **kwargs)
+
+        self.selectedFolder = tk.StringVar()
+        self.selectedFolder.set("Selected folder: ")
+        self.investigationActive = tk.BooleanVar()
+        self.investigationActive.set(False)
+        self.totalFileCount = tk.StringVar()
+        self.selectedFolder.set("Total files investigated: ")
+        self.startTime = tk.StringVar()
+        self.timer = tk.StringVar()
+
+        self.wm_title("The Watcher")
+        container = tk.Frame(self, height=400, width=600)
+        container.pack(side="top", fill="both", expand=True)
+        container.grid_rowconfigure(0, weight=1)
+        container.grid_columnconfigure(0, weight=1)
+
+        # Dictionary of frames to manage the different pages
+        self.frames = {}
+
+        for F in (MainMenu, EventLog, FileLog, Report):
+            frame = F(container, self)
+            self.frames[F] = frame
+            frame.grid(row=0, column=0, sticky="nsew")
+
+        # Using a method to switch frames
+        self.ShowFrame(MainMenu)
+
+    # To swap between frames
+    def ShowFrame(self, cont):
+        frame = self.frames[cont]
+        # raises the current frame to the top
+        frame.tkraise()
 
 def countFiles(filepath):
     counter = 0
@@ -19,114 +80,32 @@ def countFiles(filepath):
             counter += 1
     return counter
 
-def updateTimer(window, starttime):
-    global investigationActive
-    while investigationActive:
+def Timer(controller, starttime):
+    while controller.investigationActive.get() == True:
         currenttime = int(round(time.time() * 100)) - starttime
-        window['TimeElapsed'].update('Time elapsed: {:02d}:{:02d}'.format((currenttime // 100) // 60,(currenttime // 100) % 60))
+        controller.timer.set('Time elapsed: {:02d}:{:02d}:{:02d}'.format((currenttime // 100) // 60 // 60, (currenttime // 100) // 60,(currenttime // 100) % 60))
+        time.sleep(1)
+    print("Timer exited")
 
+# To start investigation
+def BeginInvestigation(controller):
+    global selectedFolder
+    folderName = filedialog.askdirectory()
+    controller.selectedFolder.set("Selected folder: "+folderName)
+    controller.investigationActive.set(True)
+    controller.totalFileCount.set("Total files investigated: " + '0' + '/' + str(countFiles(folderName)))
+    now = datetime.now()
+    controller.startTime.set("Start time: " + now.strftime("%d/%m/%Y %H:%M:%S"))
+    starttime = int(round(time.time() * 100))
+    timerThread = threading.Thread(target=Timer, args=(controller, starttime), daemon=True)
+    timerThread.start()
 
-# Theme
-gui.theme('DarkAmber')
+def EndInvestigation(controller):
+    controller.investigationActive.set(False)
+    controller.ShowFrame(Report)
 
-InvestigationHeader = [
-    [gui.Button('Events'), gui.Button('Files')],
-    [gui.Text(key = "FileCount")],
-    [gui.Text(key = "SelectedFolder")],
-    [gui.Text("Watchdog is running... ")],
-    [gui.Text(key="StartTime")],
-    [gui.Text(key="TimeElapsed")],
-    [gui.Button("End investigation")]
-]
+if __name__ == "__main__":
+    investigationActive = False
 
-FileLog = [
-    [gui.Text("This is the file log page.")],
-]
-
-filelist = [
-        ["fuck", "this", "shit", "im", "out"],
-        ["coffee", "tea", "whiskey", "and", "me"],
-        ["ded", "meeeep", "one espresso depresso please thankyou", "meat bicycle", "chocolate milo shake"]
-    ]
-
-filelist_headings = ["Time", "Filename", "Action", "Notes", "View Change"]
-
-EventLog = [
-        [gui.Table(values=filelist,
-                   headings=filelist_headings,
-                   max_col_width=100,
-                   auto_size_columns=True,
-                   display_row_numbers=False,
-                   justification="right",
-                   num_rows=10,
-                   key="-TABLE-",
-                   row_height=35)],
-        [gui.Button("Append")]
-        
-    ]
-
-MainMenu = [
-    [gui.Text("Select the hard drive/ folder that will be investigated.")],
-    [gui.Text("Select Folder:"), gui.Input(key="-IN-"), gui.FolderBrowse()],
-    [gui.Exit(), gui.Button("Commence investigation")],
-]
-
-ProgramController = [
-    [gui.Column(MainMenu, key='MainMenu'),gui.Column(InvestigationHeader, visible=False, key='InvestigationHeader')],
-    [gui.Column(FileLog, visible=False, key='FileLog'), gui.Column(EventLog, visible=False, key='EventLog')]
-]
-
-window = gui.Window("The Watcher", ProgramController)
-
-# Selected folder for investigation
-selectedfolder = ""
-investigationActive = False
-
-totalfilecount = 0
-# Counter for investigated files
-filecount = 0
-currenttime = 0
-
-while True:
-    event, values = window.read()
-    selectedfolder = values['Browse']
-    
-    # User exit application
-    if event in (gui.WINDOW_CLOSED, "Exit"):
-        investigationActive = False
-        break
-
-    # When the user starts an investigation
-    if event == "Commence investigation":
-        investigationActive = True
-        totalfilecount = countFiles(selectedfolder)
-        window["MainMenu"].update(visible=False)
-        window['InvestigationHeader'].update(visible=True)
-        window['EventLog'].update(visible=True)
-        starttime = datetime.now()
-        window['StartTime'].update("Start time: "+ starttime.strftime("%d/%m/%Y %H:%M:%S"))
-        starttime = int(round(time.time() * 100))
-        timerThread = threading.Thread(target=updateTimer, args=(window, starttime))
-        timerThread.start()
-    
-    # While investigation is active
-    if investigationActive:
-        window['FileCount'].update("Files investigated: " + str(filecount) + '/' + str(totalfilecount))
-        window['SelectedFolder'].update("Folder under investigation: "+selectedfolder)
-        if event == "Events":
-            window['FileLog'].update(visible=False)
-            window['EventLog'].update(visible=True)        
-        if event == "Files":
-            window['FileLog'].update(visible=True)
-            window['EventLog'].update(visible=False)           
-
-    # When the user clicks on end investigation, it should redirect to the report page. For now, it will close the program.
-    if event in (gui.WINDOW_CLOSED, "End investigation"):
-        investigationActive = False
-        break
-
-    # Temporary button to show appending to list. Should be removed in final version.
-    if event == "Append":
-        appendToList(window, filelist)
-
-window.close()
+    mainProgram = Windows()
+    mainProgram.mainloop()
