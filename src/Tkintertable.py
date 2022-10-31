@@ -1,26 +1,42 @@
-import pandas as pd
-import numpy as np
-
-import sys 
-from tkinter import * 
-
+from tkinter import *
+  
+# Create object
 root = Tk()
-root.geometry('580x250')
-
-dates = pd.date_range('20210101', periods=8)
-dframe = pd.DataFrame(np.random.randn(8,4),index=dates,columns=list('ABCD'))
-
-txt = Text(root) 
-txt.pack() 
-
-class PrintToTXT(object): 
- def write(self, s): 
-     txt.insert(END, s)
-
-sys.stdout = PrintToTXT() 
-
-print ('Pandas date range of 8 values in 1 timestamp column adjacent to a numpy random float array of 8 rows and 4 columns, displayed in a Tkinter table') 
-
-print (dframe)
-
-mainloop()
+  
+# Adjust size
+root.geometry( "200x200" )
+  
+# Change the label text
+def show():
+    label.config( text = clicked.get() )
+  
+# Dropdown menu options
+options = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday"
+]
+  
+# datatype of menu text
+clicked = StringVar()
+  
+# initial menu text
+clicked.set( "Monday" )
+  
+# Create Dropdown menu
+drop = OptionMenu( root , clicked , *options )
+drop.pack()
+  
+# Create button, it will change label text
+button = Button( root , text = "click Me" , command = show ).pack()
+  
+# Create Label
+label = Label( root , text = " " )
+label.pack()
+  
+# Execute tkinter
+root.mainloop()

@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import StringVar, ttk
 from tkinter import filedialog
 import time
 import os
@@ -10,11 +11,15 @@ class MainMenu(tk.Frame):
         tk.Frame.__init__(self, parent)
         tk.Label(self,text="Select the folder that will be used in the investigation.").pack(fill="both", expand=True)
         tk.Label(self,textvariable= controller.selectedFolder).pack(fill="both", expand=True)
-        tk.Button(self,text="Select Folder", command=lambda:[BeginInvestigation(controller)]).pack(fill="both", expand=True)
-        tk.Button(self,text="Begin Investigation", command=lambda:[controller.ShowFrame(EventLog)]).pack(fill="both", expand=True)
+        tk.Button(self,text="Select Folder", command=lambda:[FolderSelect(controller,self)]).pack(fill="both", expand=True)
+        self.startButton = tk.Button(self,text="Begin Investigation", state="disabled", command=lambda:[BeginInvestigation(controller)])
+        self.startButton.pack(fill="both", expand=True)
 
 class EventLog(tk.Frame):
     def __init__(self, parent, controller):
+        self.rowNo = tk.IntVar()
+        self.rowNo.set(1)
+
         tk.Frame.__init__(self, parent)
         tk.Button(self,text="View Event Log", command=lambda:[controller.ShowFrame(EventLog)]).pack(fill="both", expand=True)
         tk.Button(self,text="View File Log", command=lambda:[controller.ShowFrame(FileLog)]).pack(fill="both", expand=True)
@@ -27,24 +32,74 @@ class EventLog(tk.Frame):
         tk.Label(self,textvariable= controller.timer).pack(fill="both", expand=True)
         tk.Button(self,text="End Investigation", command=lambda:[EndInvestigation(controller)]).pack(fill="both", expand=True)
 
-        # Create events table
-        # Headers
-        tk.Label(self, text="File", anchor="w").pack(side="left")
-        tk.Label(self, text="Classification", anchor="w").pack(side="left")
-        tk.Label(self, text="Notes", anchor="w").pack(side="left")
-        tk.Label(self, text="Edit", anchor="w").pack(side="left")
+        # Create file table
+        self.canvas = tk.Canvas(self, borderwidth=0, background="#ffffff")
+        self.fileTableFrame = tk.Frame(self.canvas, background="#ffffff")
+        self.vsb = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.vsb.set)
+
+        self.vsb.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.canvas.create_window((4,4), window=self.fileTableFrame, anchor="nw",
+                                  tags="self.fileTableFrame")
+
+        self.fileTableFrame.bind("<Configure>", self.onFrameConfigure)
 
         # Data
-        data = [
-            ["testfile.mp4", "Submissible", "Notes"]
+        self.fileData = [
+            [1, "testfile.mp4", "Submissible", "This file was determined to be useless."],
+            [2, "testfile1.mp4", "Submissible", "This file was determined to be useless."],
+            [3, "testfile2.mp4", "Non-Submissible", "This file was determined to be useless."],
+            [4, "testfile3.mp4", "Submissible", "This file was determined to be useless."],
+            [5, "testfile1.mp4", "Submissible", "This file was determined to be useless."],
+            [6, "testfile2.mp4", "Non-Submissible", "This file was determined to be useless."],
         ]
 
+        # Headers
+        tk.Label(self.fileTableFrame, text="No.", anchor="w").grid(row=0, column=0)
+        tk.Label(self.fileTableFrame, text="File", anchor="w").grid(row=0, column=1)
+        tk.Label(self.fileTableFrame, text="Classification", anchor="w").grid(row=0, column=2)
+        tk.Label(self.fileTableFrame, text="Notes", anchor="w").grid(row=0, column=3)
+        tk.Label(self.fileTableFrame, text="Edit", anchor="w").grid(row=0, column=4)
+
+        self.populateData()
+
+    def UpdateSubmissibility(self, rowNo):
+        print(rowNo)
+        return None
+
+    def populateData(self):
         # Populate table
-        for row in data:
-            tk.Label(self, text=row[0], anchor="w").pack(side="left")
-            tk.Label(self, text="Classification", anchor="w").pack(side="left")
-            tk.Label(self, text=row[2], anchor="w").pack(side="left")
-            tk.Button(self,text="Edit", command=lambda:[controller.ShowFrame(FileLog)]).pack(side="left")
+        for row in self.fileData:
+            self.submissibility = StringVar()
+            currentRowNo = self.rowNo.get()
+            tk.Label(self.fileTableFrame, text=row[0], anchor="w").grid(row=currentRowNo, column=0)
+            tk.Label(self.fileTableFrame, text=row[1], anchor="w").grid(row=currentRowNo, column=1)
+            tk.Radiobutton(self.fileTableFrame, variable=self.submissibility, value="Submissible", text="Submissible", command=self.UpdateSubmissibility(currentRowNo)).grid(row=currentRowNo, column=2)
+            tk.Radiobutton(self.fileTableFrame, variable=self.submissibility, value="Non-Submissible", text="Non-Submissible", command=self.UpdateSubmissibility(currentRowNo)).grid(row=currentRowNo, column=3)
+            tk.Label(self.fileTableFrame, text=row[3], anchor="w").grid(row=currentRowNo, column=4)
+            tk.Button(self.fileTableFrame, text="Edit", command=lambda:[self.addNotes()]).grid(row=currentRowNo, column=5)
+            self.rowNo.set(currentRowNo+1)
+
+    # To add a new file item:
+    def addNewFile(self, data):
+        filedata = self.fileData
+        self.fileData.append(data)
+        currentRowNo = self.rowNo.get()
+        tk.Label(self.fileTableFrame, text=data[0], anchor="w").grid(row=currentRowNo, column=0)
+        tk.Label(self.fileTableFrame, text=data[1], anchor="w").grid(row=currentRowNo, column=1)
+        tk.Radiobutton(self.fileTableFrame, text="Submissible", command=self.UpdateSubmissibility(currentRowNo)).grid(row=currentRowNo, column=2)
+        tk.Radiobutton(self.fileTableFrame, text="Non-Submissible", command=self.UpdateSubmissibility(currentRowNo)).grid(row=currentRowNo, column=3)
+        tk.Label(self.fileTableFrame, text=data[3], anchor="w").grid(row=currentRowNo, column=3)
+        tk.Button(self.fileTableFrame, text="Edit", command=lambda:[self.addNotes()]).grid(row=currentRowNo, column=4)
+        self.rowNo.set(currentRowNo+1)
+
+    def addNotes(self):
+        self.fileData
+
+    def onFrameConfigure(self, event):
+        '''Reset the scroll region to encompass the inner frame'''
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         
 class FileLog(tk.Frame):
     def __init__(self, parent, controller):
@@ -61,7 +116,6 @@ class Windows(tk.Tk):
         tk.Tk.__init__(self, *args, **kwargs)
 
         self.selectedFolder = tk.StringVar()
-        self.selectedFolder.set("Selected folder: ")
         self.investigationActive = tk.BooleanVar()
         self.investigationActive.set(False)
         self.investigatedFileCount = tk.IntVar()
@@ -95,10 +149,7 @@ class Windows(tk.Tk):
 
 # File counter function to count number of files within folder and all subfolders.
 def countFiles(filepath):
-    counter = 0
-    for path in os.listdir(filepath):
-        if os.path.isfile(os.path.join(filepath, path)):
-            counter += 1
+    counter = sum([len(files) for r, d, files in os.walk(filepath)])
     return counter
 
 # Timer function for the investigation
@@ -115,19 +166,30 @@ def FileInvestigated(controller):
     controller.investigatedFileCount.set(fileCount)
     controller.investigatedFileCountString.set("Total files investigated: " + str(fileCount) + '/' + str(controller.totalFileCount.get()))
 
-# To start investigation
-def BeginInvestigation(controller):
-    global selectedFolder
+# Prompts user to select folder
+def FolderSelect(controller, menuframe):
     folderName = filedialog.askdirectory()
     controller.selectedFolder.set("Selected folder: "+folderName)
     controller.investigationActive.set(True)
-    controller.totalFileCount.set(countFiles(folderName))
-    controller.investigatedFileCountString.set("Files investigated: "+ "0/" + str(controller.totalFileCount.get()))
+
+    # Set start button to be active
+    menuframe.startButton["state"] = "normal"
+
+# To start investigation
+def BeginInvestigation(controller):
     now = datetime.now()
     controller.startTime.set("Start time: " + now.strftime("%d/%m/%Y %H:%M:%S"))
     starttime = int(round(time.time() * 100))
+    
+    # Start timer thread
     timerThread = threading.Thread(target=Timer, args=(controller, starttime), daemon=True)
     timerThread.start()
+
+    # Set file count
+    controller.totalFileCount.set(countFiles(controller.selectedFolder.get().replace("Selected folder: ",'')))
+    controller.investigatedFileCountString.set("Files investigated: "+ "0/" + str(controller.totalFileCount.get()))
+
+    controller.ShowFrame(EventLog)
 
 def EndInvestigation(controller):
     controller.investigationActive.set(False)
