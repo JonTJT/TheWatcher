@@ -33,16 +33,17 @@ class EventLog(tk.Frame):
         tk.Button(self,text="End Investigation", command=lambda:[EndInvestigation(controller)]).pack(fill="both", expand=True)
 
         # Create file table
-        self.canvas = tk.Canvas(self, borderwidth=0, background="#ffffff")
-        self.fileTableFrame = tk.Frame(self.canvas, background="#ffffff")
+        self.canvas = tk.Canvas(self, borderwidth=0, background="#FAF9F6")
+        self.fileTableFrame = tk.Frame(self.canvas, background="#FAF9F6")
         self.vsb = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.vsb.set)
 
         self.vsb.pack(side="right", fill="y")
         self.canvas.pack(side="left", fill="both", expand=True)
-        self.canvas.create_window((4,4), window=self.fileTableFrame, anchor="nw",
+        self.frame_id = self.canvas.create_window(0, 0, window=self.fileTableFrame, anchor="nw",
                                   tags="self.fileTableFrame")
 
+        self.canvas.bind("<Configure>", self.on_canvas_configure)
         self.fileTableFrame.bind("<Configure>", self.onFrameConfigure)
 
         # Data
@@ -56,11 +57,11 @@ class EventLog(tk.Frame):
         ]
 
         # Headers
-        tk.Label(self.fileTableFrame, text="No.", anchor="w").grid(row=0, column=0)
-        tk.Label(self.fileTableFrame, text="File", anchor="w").grid(row=0, column=1)
-        tk.Label(self.fileTableFrame, text="Classification", anchor="w").grid(row=0, column=2)
-        tk.Label(self.fileTableFrame, text="Notes", anchor="w").grid(row=0, column=3)
-        tk.Label(self.fileTableFrame, text="Edit", anchor="w").grid(row=0, column=4)
+        tk.Label(self.fileTableFrame, text="No.", anchor="w", background="#FAF9F6").grid(row=0, column=0)
+        tk.Label(self.fileTableFrame, text="File", anchor="w", background="#FAF9F6").grid(row=0, column=1)
+        tk.Label(self.fileTableFrame, text="Classification", anchor="w", background="#FAF9F6").grid(row=0, column=2)
+        tk.Label(self.fileTableFrame, text="Notes", anchor="w", background="#FAF9F6").grid(row=0, column=3)
+        tk.Label(self.fileTableFrame, text="Edit", anchor="w", background="#FAF9F6").grid(row=0, column=4)
 
         self.populateData()
 
@@ -69,30 +70,37 @@ class EventLog(tk.Frame):
         return None
 
     def populateData(self):
+        self.fileTableFrame.grid_columnconfigure(0, weight=1)
         # Populate table
         for row in self.fileData:
             self.submissibility = StringVar()
             currentRowNo = self.rowNo.get()
-            tk.Label(self.fileTableFrame, text=row[0], anchor="w").grid(row=currentRowNo, column=0)
-            tk.Label(self.fileTableFrame, text=row[1], anchor="w").grid(row=currentRowNo, column=1)
-            tk.Radiobutton(self.fileTableFrame, variable=self.submissibility, value="Submissible", text="Submissible", command=self.UpdateSubmissibility(currentRowNo)).grid(row=currentRowNo, column=2)
-            tk.Radiobutton(self.fileTableFrame, variable=self.submissibility, value="Non-Submissible", text="Non-Submissible", command=self.UpdateSubmissibility(currentRowNo)).grid(row=currentRowNo, column=3)
-            tk.Label(self.fileTableFrame, text=row[3], anchor="w").grid(row=currentRowNo, column=4)
-            tk.Button(self.fileTableFrame, text="Edit", command=lambda:[self.addNotes()]).grid(row=currentRowNo, column=5)
+            tk.Label(self.fileTableFrame, text=row[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
+            tk.Label(self.fileTableFrame, text=row[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
+            tk.Radiobutton(self.fileTableFrame, variable=self.submissibility, value="Submissible", text="Submissible", command=self.UpdateSubmissibility(currentRowNo), background="#FAF9F6").grid(row=currentRowNo, column=2, sticky="ew")
+            tk.Radiobutton(self.fileTableFrame, variable=self.submissibility, value="Non-Submissible", text="Non-Submissible", command=self.UpdateSubmissibility(currentRowNo), background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
+            tk.Label(self.fileTableFrame, text=row[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=4, sticky="ew")
+            tk.Button(self.fileTableFrame, text="Edit", command=lambda:[self.addNotes()], background="#FAF9F6").grid(row=currentRowNo, column=5, sticky="ew")
             self.rowNo.set(currentRowNo+1)
+
+        currentRowNo = self.rowNo.get()
+        tk.Button(self.fileTableFrame, text="Append", anchor="w", command=lambda:[self.addNewFile((0, 1, 2, 3))], background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
 
     # To add a new file item:
     def addNewFile(self, data):
         filedata = self.fileData
         self.fileData.append(data)
         currentRowNo = self.rowNo.get()
-        tk.Label(self.fileTableFrame, text=data[0], anchor="w").grid(row=currentRowNo, column=0)
-        tk.Label(self.fileTableFrame, text=data[1], anchor="w").grid(row=currentRowNo, column=1)
-        tk.Radiobutton(self.fileTableFrame, text="Submissible", command=self.UpdateSubmissibility(currentRowNo)).grid(row=currentRowNo, column=2)
-        tk.Radiobutton(self.fileTableFrame, text="Non-Submissible", command=self.UpdateSubmissibility(currentRowNo)).grid(row=currentRowNo, column=3)
-        tk.Label(self.fileTableFrame, text=data[3], anchor="w").grid(row=currentRowNo, column=3)
-        tk.Button(self.fileTableFrame, text="Edit", command=lambda:[self.addNotes()]).grid(row=currentRowNo, column=4)
+        tk.Label(self.fileTableFrame, text=data[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
+        tk.Label(self.fileTableFrame, text=data[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
+        tk.Radiobutton(self.fileTableFrame, text="Submissible", command=self.UpdateSubmissibility(currentRowNo), background="#FAF9F6").grid(row=currentRowNo, column=2, sticky="ew")
+        tk.Radiobutton(self.fileTableFrame, text="Non-Submissible", command=self.UpdateSubmissibility(currentRowNo), background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
+        tk.Label(self.fileTableFrame, text=data[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=4, sticky="ew")
+        tk.Button(self.fileTableFrame, text="Edit", command=lambda:[self.addNotes()], background="#FAF9F6").grid(row=currentRowNo, column=5, sticky="ew")
         self.rowNo.set(currentRowNo+1)
+
+        # Test button for adding to list
+        tk.Button(self.fileTableFrame, text="Append", anchor="w", command=lambda:[self.addNewFile((0, 1, 2, 3))], background="#FAF9F6").grid(row=currentRowNo+1, column=1, sticky="ew")
 
     def addNotes(self):
         self.fileData
@@ -100,6 +108,10 @@ class EventLog(tk.Frame):
     def onFrameConfigure(self, event):
         '''Reset the scroll region to encompass the inner frame'''
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    # Function to resize frame to fit the canvas
+    def on_canvas_configure(self, event):
+        self.canvas.itemconfig(self.frame_id, width=event.width)
         
 class FileLog(tk.Frame):
     def __init__(self, parent, controller):
@@ -199,4 +211,5 @@ if __name__ == "__main__":
     investigationActive = False
 
     mainProgram = Windows()
+    mainProgram.geometry("800x400")
     mainProgram.mainloop()
