@@ -16,16 +16,70 @@ class MainMenu(tk.Frame):
 class EventLog(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        tk.Button(self,text="View Event Log", command=lambda:[controller.ShowFrame(EventLog)]).pack(fill="both", expand=True)
-        tk.Button(self,text="View File Log", command=lambda:[controller.ShowFrame(FileLog)]).pack(fill="both", expand=True)
-        Title = tk.Label(self, text="Event Log").pack(fill="both", expand=True)
-        tk.Label(self,textvariable= controller.totalFileCount).pack(fill="both", expand=True)
-        tk.Label(self,textvariable= controller.selectedFolder).pack(fill="both", expand=True)
-        tk.Label(self,textvariable= controller.startTime).pack(fill="both", expand=True)
+        tk.Button(self,text="View Event Log", command=lambda:[controller.ShowFrame(EventLog)]).grid(row=0, column=2, sticky="ew")
+        tk.Button(self,text="View File Log", command=lambda:[controller.ShowFrame(FileLog)]).grid(row=1, column=2, sticky="ew")
+        Title = tk.Label(self, text="Event Log").grid(row=3, column=2, sticky="ew")
+        tk.Label(self,textvariable= controller.totalFileCount).grid(row=4, column=2, sticky="ew")
+        tk.Label(self,textvariable= controller.selectedFolder).grid(row=5, column=2, sticky="ew")
+        tk.Label(self,textvariable= controller.startTime).grid(row=6, column=2, sticky="ew")
 
         # Timer to track investigation
-        tk.Label(self,textvariable= controller.timer).pack(fill="both", expand=True)
-        tk.Button(self,text="End Investigation", command=lambda:[EndInvestigation(controller)]).pack(fill="both", expand=True)
+        tk.Label(self,textvariable= controller.timer).grid(row=7, column=2, sticky="ew")
+        
+
+        # Table to display event logs
+        data = [
+            # Time, Filename, Action, Notes, Active
+            [1000,   "hello.py", "action 1", "notes 1", True],
+            [1345,   "bomb.txt", "action 2", "notes 2",  False],
+            [1711,   ".gitignore", "action 3", "notes 3",  True],
+            ]
+
+        # Buttons to do stuff
+        tk.Button(self, text="Append", command=lambda newFile=[1234, "newfile", "action ?", "notes ?",  True], eventlog=data: self.appendFileEntry(newFile,eventlog)).grid(row=8, column=2)
+        tk.Button(self, text="Debug list", command=lambda eventlog=data: self.debugShowlist(eventlog)).grid(row=9, column=2)
+
+        # Button to end investigation, to be at bottom
+        tk.Button(self,text="End Investigation", command=lambda:[EndInvestigation(controller)]).grid(row=10, column=2, sticky="ew")
+
+        self.grid_columnconfigure(1, weight=1)
+        tk.Label(self, text="Time", anchor="w").grid(row=11, column=0, sticky="ew")
+        tk.Label(self, text="Filename", anchor="w").grid(row=11, column=1, sticky="ew")
+        tk.Label(self, text="Action", anchor="w").grid(row=11, column=2, sticky="ew")
+        tk.Label(self, text="Notes", anchor="w").grid(row=11, column=3, sticky="ew")
+        tk.Label(self, text="View Change", anchor="w").grid(row=11, column=4, sticky="ew")
+
+        rows = 12
+        for (timeModified, name, action, notes, active) in data:
+            nr_label = tk.Label(self, text=str(timeModified), anchor="w")
+            name_label = tk.Label(self, text=name, anchor="w")
+            actionLabel = tk.Label(self, text=action, anchor="w")
+            notesLabel = tk.Label(self, text=notes, anchor="w")
+            viewChangeButton = tk.Button(self, text="Click to View", command=lambda name=name: self.viewChange(name))
+
+            nr_label.grid(row=rows, column=0, sticky="nw")
+            name_label.grid(row=rows, column=1, sticky="nw")
+            actionLabel.grid(row=rows, column=2, sticky="nw")
+            notesLabel.grid(row=rows, column=3, sticky="nw")
+            viewChangeButton.grid(row=rows, column=4, sticky="nw")
+
+            rows += 1
+
+        
+
+    def delete(self, name):
+        print("deleting...file=", name)
+
+    def appendFileEntry(self, newFile, eventlog):
+        print("Appending...", newFile)
+        eventlog.append(newFile)
+
+
+    def viewChange(self, name):
+        print("Viewing change of file", name)
+
+    def debugShowlist(self, data):
+        print(data)
         
 class FileLog(tk.Frame):
     def __init__(self, parent, controller):
