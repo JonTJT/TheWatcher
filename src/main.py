@@ -15,7 +15,7 @@ class MainMenu(tk.Frame):
         self.startButton = tk.Button(self,text="Begin Investigation", state="disabled", command=lambda:[BeginInvestigation(controller)])
         self.startButton.pack(fill="both", expand=True)
 
-class EventLog(tk.Frame):
+class FileLog(tk.Frame):
     def __init__(self, parent, controller):
         self.rowNo = tk.IntVar()
         self.rowNo.set(1)
@@ -23,7 +23,7 @@ class EventLog(tk.Frame):
         tk.Frame.__init__(self, parent)
         tk.Button(self,text="View Event Log", command=lambda:[controller.ShowFrame(EventLog)]).pack(fill="both", expand=True)
         tk.Button(self,text="View File Log", command=lambda:[controller.ShowFrame(FileLog)]).pack(fill="both", expand=True)
-        Title = tk.Label(self, text="Event Log").pack(fill="both", expand=True)
+        Title = tk.Label(self, text="File Log").pack(fill="both", expand=True)
         tk.Label(self,textvariable= controller.investigatedFileCountString).pack(fill="both", expand=True)
         tk.Label(self,textvariable= controller.selectedFolder).pack(fill="both", expand=True)
         tk.Label(self,textvariable= controller.startTime).pack(fill="both", expand=True)
@@ -48,12 +48,12 @@ class EventLog(tk.Frame):
 
         # Data
         self.fileData = [
-            [1, "testfile.mp4", "Submissible", "This file was determined to be useless."],
-            [2, "testfile1.mp4", "Submissible", "This file was determined to be useless."],
-            [3, "testfile2.mp4", "Non-Submissible", "This file was determined to be useless."],
-            [4, "testfile3.mp4", "Submissible", "This file was determined to be useless."],
-            [5, "testfile1.mp4", "Submissible", "This file was determined to be useless."],
-            [6, "testfile2.mp4", "Non-Submissible", "This file was determined to be useless."],
+            [1, "testfile.mp4", "Submissible", tk.StringVar()],
+            [2, "testfile1.mp4", "Submissible", tk.StringVar()],
+            [3, "testfile2.mp4", "Non-Submissible", tk.StringVar()],
+            [4, "testfile3.mp4", "Submissible", tk.StringVar()],
+            [5, "testfile1.mp4", "Submissible", tk.StringVar()],
+            [6, "testfile2.mp4", "Non-Submissible", tk.StringVar()],
         ]
 
         # Headers
@@ -65,45 +65,83 @@ class EventLog(tk.Frame):
 
         self.populateData()
 
-    def UpdateSubmissibility(self, rowNo):
-        print(rowNo)
-        return None
+        # Test button to append new entry
+        #tk.Button(self, text="Append", anchor="w", command=lambda:[self.addNewFile((0, 1, 2, tk.StringVar()))], background="#FAF9F6").pack(side="bottom")
 
+    # Populate table with take data, to remove before deployment
     def populateData(self):
+
         self.fileTableFrame.grid_columnconfigure(0, weight=1)
+
+        options = [
+            "Submissible",
+            "Non-Submissible"
+        ]
+
         # Populate table
         for row in self.fileData:
-            self.submissibility = StringVar()
+            selectSubmissibility = StringVar()
             currentRowNo = self.rowNo.get()
-            tk.Label(self.fileTableFrame, text=row[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
+
+            fileNo = tk.Label(self.fileTableFrame, text=row[0], anchor="w", background="#FAF9F6")
+            fileNo.grid(row=currentRowNo, column=0, sticky="ew")
             tk.Label(self.fileTableFrame, text=row[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
-            tk.Radiobutton(self.fileTableFrame, variable=self.submissibility, value="Submissible", text="Submissible", command=self.UpdateSubmissibility(currentRowNo), background="#FAF9F6").grid(row=currentRowNo, column=2, sticky="ew")
-            tk.Radiobutton(self.fileTableFrame, variable=self.submissibility, value="Non-Submissible", text="Non-Submissible", command=self.UpdateSubmissibility(currentRowNo), background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
-            tk.Label(self.fileTableFrame, text=row[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=4, sticky="ew")
-            tk.Button(self.fileTableFrame, text="Edit", command=lambda:[self.addNotes()], background="#FAF9F6").grid(row=currentRowNo, column=5, sticky="ew")
+            selectSubmissibility.set("Click to select")
+            tk.OptionMenu( self.fileTableFrame , selectSubmissibility , *options).grid(row=currentRowNo, column=2)
+            tk.Label(self.fileTableFrame, textvariable=row[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
+            tk.Button(self.fileTableFrame, text="Edit", command=lambda itemNo = currentRowNo:[self.addNotes(itemNo)]).grid(row=currentRowNo, column=4, sticky="ew")
+
             self.rowNo.set(currentRowNo+1)
 
         currentRowNo = self.rowNo.get()
-        tk.Button(self.fileTableFrame, text="Append", anchor="w", command=lambda:[self.addNewFile((0, 1, 2, 3))], background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
+
+
+    def UpdateSubmissibility(self, rowNo):
+        print(rowNo)
+        return None
 
     # To add a new file item:
     def addNewFile(self, data):
         filedata = self.fileData
         self.fileData.append(data)
         currentRowNo = self.rowNo.get()
-        tk.Label(self.fileTableFrame, text=data[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
+        selectSubmissibility = StringVar()
+
+        options = [
+            "Submissible",
+            "Non-Submissible"
+        ]
+
+        fileNo = tk.Label(self.fileTableFrame, text=data[0], anchor="w", background="#FAF9F6")
+        fileNo.grid(row=currentRowNo, column=0, sticky="ew")
         tk.Label(self.fileTableFrame, text=data[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
-        tk.Radiobutton(self.fileTableFrame, text="Submissible", command=self.UpdateSubmissibility(currentRowNo), background="#FAF9F6").grid(row=currentRowNo, column=2, sticky="ew")
-        tk.Radiobutton(self.fileTableFrame, text="Non-Submissible", command=self.UpdateSubmissibility(currentRowNo), background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
-        tk.Label(self.fileTableFrame, text=data[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=4, sticky="ew")
-        tk.Button(self.fileTableFrame, text="Edit", command=lambda:[self.addNotes()], background="#FAF9F6").grid(row=currentRowNo, column=5, sticky="ew")
+        selectSubmissibility.set("Click to select")
+        tk.OptionMenu( self.fileTableFrame , selectSubmissibility , *options).grid(row=currentRowNo, column=2)
+        tk.Label(self.fileTableFrame, textvariable=data[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
+        tk.Button(self.fileTableFrame, text="Edit", command=lambda itemNo = currentRowNo:[self.addNotes(itemNo)]).grid(row=currentRowNo, column=4, sticky="ew")
+
         self.rowNo.set(currentRowNo+1)
 
-        # Test button for adding to list
-        tk.Button(self.fileTableFrame, text="Append", anchor="w", command=lambda:[self.addNewFile((0, 1, 2, 3))], background="#FAF9F6").grid(row=currentRowNo+1, column=1, sticky="ew")
+    # Edit the notes for the specific row
+    def editNotes(self, popup, text, itemno):
+        self.fileData[itemno-1][3].set(text)
+        popup.destroy()
 
-    def addNotes(self):
-        self.fileData
+    # Open up popup window to prompt investigator to add notes
+    def addNotes(self, itemno):
+        window = tk.Frame()
+        #Create a Toplevel window
+        popup= tk.Toplevel(window)
+        popup.geometry("750x250")
+
+        #Create an Entry Widget in the Toplevel window
+        noteEdit= tk.Entry(popup)
+        noteEdit.insert(0, self.fileData[itemno-1][3].get())
+        noteEdit.place(width=400, height=150)
+
+        #Create a Button Widget in the Toplevel Window
+        button= tk.Button(popup, text="Done", command=lambda:self.editNotes(popup,noteEdit.get(),itemno))
+        button.pack(side = "bottom", pady=5)
 
     def onFrameConfigure(self, event):
         '''Reset the scroll region to encompass the inner frame'''
@@ -113,10 +151,22 @@ class EventLog(tk.Frame):
     def on_canvas_configure(self, event):
         self.canvas.itemconfig(self.frame_id, width=event.width)
         
-class FileLog(tk.Frame):
+class EventLog(tk.Frame):
     def __init__(self, parent, controller):
+        self.rowNo = tk.IntVar()
+        self.rowNo.set(1)
+
         tk.Frame.__init__(self, parent)
-        Title = tk.Label(self, text="File Log").pack(fill="both", expand=True)
+        tk.Button(self,text="View Event Log", command=lambda:[controller.ShowFrame(EventLog)]).pack(fill="both", expand=True)
+        tk.Button(self,text="View File Log", command=lambda:[controller.ShowFrame(FileLog)]).pack(fill="both", expand=True)
+        Title = tk.Label(self, text="Event Log").pack(fill="both", expand=True)
+        tk.Label(self,textvariable= controller.investigatedFileCountString).pack(fill="both", expand=True)
+        tk.Label(self,textvariable= controller.selectedFolder).pack(fill="both", expand=True)
+        tk.Label(self,textvariable= controller.startTime).pack(fill="both", expand=True)
+
+        # Timer to track investigation
+        tk.Label(self,textvariable= controller.timer).pack(fill="both", expand=True)
+        tk.Button(self,text="End Investigation", command=lambda:[EndInvestigation(controller)]).pack(fill="both", expand=True)
 
 class Report(tk.Frame):
     def __init__(self, parent, controller):
