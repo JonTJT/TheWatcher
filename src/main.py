@@ -166,8 +166,8 @@ class FileLog(tk.Frame):
         
 class EventLog(tk.Frame):
     def __init__(self, parent, controller):
-        self.rowNo = tk.IntVar()
-        self.rowNo.set(1)
+        self.eventRowNo = tk.IntVar()
+        self.eventRowNo.set(1)
 
         tk.Frame.__init__(self, parent)
         tk.Button(self,text="View Event Log", command=lambda:[controller.ShowFrame(EventLog)]).pack(fill="both", expand=True)
@@ -180,6 +180,73 @@ class EventLog(tk.Frame):
         # Timer to track investigation
         tk.Label(self,textvariable= controller.timer).pack(fill="both", expand=True)
         tk.Button(self,text="End Investigation", command=lambda:[controller.EndInvestigation()]).pack(fill="both", expand=True)
+
+        # Create file table
+        self.canvas = tk.Canvas(self, borderwidth=0, background="#FAF9F6")
+        self.eventsTableFrame = tk.Frame(self.canvas, background="#FAF9F6")
+        self.vsb = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.vsb.set)
+
+        self.vsb.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.frame_id = self.canvas.create_window(0, 0, window=self.eventsTableFrame, anchor="nw",
+                                  tags="self.eventsTableFrame")
+
+        self.canvas.bind("<Configure>", self.on_canvas_configure)
+        self.eventsTableFrame.bind("<Configure>", self.onFrameConfigure)
+
+        # Headers
+        tk.Label(self.eventsTableFrame, text="No.", anchor="w", background="#FAF9F6").grid(row=0, column=0)
+        tk.Label(self.eventsTableFrame, text="Time", anchor="w", background="#FAF9F6").grid(row=0, column=1)
+        tk.Label(self.eventsTableFrame, text="File name and path", anchor="w", background="#FAF9F6").grid(row=0, column=2, ipadx=5)
+        tk.Label(self.eventsTableFrame, text="Event", anchor="w", background="#FAF9F6").grid(row=0, column=3)
+
+        self.populateData(controller)
+
+    def UpdateSubmissibility(self, rowNo):
+        print(rowNo)
+        return None
+
+    def populateData(self, controller):
+        self.eventsTableFrame.grid_columnconfigure(0, weight=1)
+        # Populate table
+        for row in controller.eventData:
+            self.submissibility = StringVar()
+            currentRowNo = self.eventRowNo.get()
+            tk.Label(self.eventsTableFrame, text=row[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
+            tk.Label(self.eventsTableFrame, text=row[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
+            tk.Label(self.eventsTableFrame, text=row[2], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=2, sticky="ew")
+            tk.Label(self.eventsTableFrame, text=row[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
+            self.eventRowNo.set(currentRowNo+1)
+
+        currentRowNo = self.eventRowNo.get()
+        tk.Button(self.eventsTableFrame, text="Append", anchor="w", command=lambda:[self.addNewEvent(["testfile.mp3", "File opened"],controller)], background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
+
+    # To add a new event item:
+    def addNewEvent(self, data, controller):
+        # Add timestamp and index to data
+        now = datetime.now()
+        data.insert(0,now.strftime("%d/%m/%Y %H:%M:%S"))
+        currentRowNo = self.eventRowNo.get()
+        data.insert(0,currentRowNo)
+
+        # Add the new data to the database
+        controller.eventData.append(data)
+
+        tk.Label(self.eventsTableFrame, text=data[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
+        tk.Label(self.eventsTableFrame, text=data[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
+        tk.Label(self.eventsTableFrame, text=data[2], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=2, sticky="ew")
+        tk.Label(self.eventsTableFrame, text=data[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
+        
+        self.eventRowNo.set(currentRowNo+1)
+
+    def onFrameConfigure(self, event):
+        '''Reset the scroll region to encompass the inner frame'''
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    # Function to resize frame to fit the canvas
+    def on_canvas_configure(self, event):
+        self.canvas.itemconfig(self.frame_id, width=event.width)
 
 class Report(tk.Frame):
     def __init__(self, parent, controller):
@@ -207,6 +274,15 @@ class Controller(tk.Tk):
             [4, "testfile3.mp4", "Submissible", tk.StringVar()],
             [5, "testfile1.mp4", "Submissible", tk.StringVar()],
             [6, "testfile2.mp4", "Non-Submissible", tk.StringVar()],
+        ]
+
+        self.eventData = [
+            [1, "02/11/2022 19:21:05", "testfile.mp4", "File opened", tk.StringVar()],
+            [2, "02/11/2022 19:21:07", "testfile1.mp4", "File opened", tk.StringVar()],
+            [3, "02/11/2022 19:21:10", "testfile2.mp4", "File modified", tk.StringVar()],
+            [4, "02/11/2022 19:21:12", "testfile3.mp4", "File opened", tk.StringVar()],
+            [5, "02/11/2022 19:21:15", "testfile1.mp4", "File opened", tk.StringVar()],
+            [6, "02/11/2022 19:21:16", "testfile2.mp4", "File modified", tk.StringVar()],
         ]
 
         self.wm_title("The Watcher")
