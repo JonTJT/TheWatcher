@@ -5,6 +5,10 @@ import time
 import os
 import threading
 from datetime import datetime
+import pyautogui
+from datetime import datetime
+import pytz
+from PIL import ImageTk, Image
 
 class MainMenu(tk.Frame):
     def __init__(self, parent, controller):
@@ -201,6 +205,10 @@ class EventLog(tk.Frame):
         tk.Label(self.fileTableFrame, text="Classification", anchor="w", background="#FAF9F6").grid(row=0, column=2)
         tk.Label(self.fileTableFrame, text="Notes", anchor="w", background="#FAF9F6").grid(row=0, column=4)
         tk.Label(self.fileTableFrame, text="Edit", anchor="w", background="#FAF9F6").grid(row=0, column=5)
+        tk.Label(self.fileTableFrame, text="Take screenshot", anchor="w", background="#FAF9F6").grid(row=0, column=6)
+        tk.Label(self.fileTableFrame, text="View screenshots", anchor="w", background="#FAF9F6").grid(row=0, column=7)
+        tk.Label(self.fileTableFrame, text="View changes", anchor="w", background="#FAF9F6").grid(row=0, column=8)
+
 
         self.populateData(controller)
 
@@ -211,15 +219,23 @@ class EventLog(tk.Frame):
     def populateData(self, controller):
         self.fileTableFrame.grid_columnconfigure(0, weight=1)
         # Populate table
-        for row in controller.eventData:
+        for (rowNo, fileName, submissible, notes, screenshotList) in controller.eventData:
             self.submissibility = StringVar()
             currentRowNo = self.rowNo.get()
-            tk.Label(self.fileTableFrame, text=row[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="w")
-            tk.Label(self.fileTableFrame, text=row[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
+            tk.Label(self.fileTableFrame, text=rowNo, anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="w")
+            tk.Label(self.fileTableFrame, text=fileName, anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
             tk.Radiobutton(self.fileTableFrame, variable=self.submissibility, value="Submissible", text="Submissible", command=self.UpdateSubmissibility(currentRowNo), background="#FAF9F6").grid(row=currentRowNo, column=2, sticky="ew")
             tk.Radiobutton(self.fileTableFrame, variable=self.submissibility, value="Non-Submissible", text="Non-Submissible", command=self.UpdateSubmissibility(currentRowNo), background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
-            tk.Label(self.fileTableFrame, textvariable=row[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=4, sticky="ew")
+            tk.Label(self.fileTableFrame, textvariable=notes, anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=4, sticky="ew")
             tk.Button(self.fileTableFrame, text="Edit", command=lambda itemNo=currentRowNo:[self.addNotes(itemNo, controller)], background="#FAF9F6").grid(row=currentRowNo, column=5, sticky="ew")
+            tk.Button(self.fileTableFrame, text="Take", command=lambda:[self.addScreenshot(rowNo, controller)], background="#FAF9F6").grid(row=currentRowNo, column=6, sticky="ew")
+            if len(screenshotList) > 0:
+                tk.Button(self.fileTableFrame, text="View", command=lambda:[self.viewScreenshots(rowNo, controller)], background="#FAF9F6").grid(row=currentRowNo, column=7, sticky="ew")
+            tk.Button(self.fileTableFrame, text="View", command=lambda:[self.viewScreenshots(controller)], background="#FAF9F6").grid(row=currentRowNo, column=8, sticky="ew")
+
+
+
+
             self.rowNo.set(currentRowNo+1)
 
         currentRowNo = self.rowNo.get()
@@ -229,14 +245,18 @@ class EventLog(tk.Frame):
     def addNewFile(self, data, controller):
         controller.eventData.append(data)
         currentRowNo = self.rowNo.get()
-
-        tk.Label(self.fileTableFrame, text=data[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
-        tk.Label(self.fileTableFrame, text=data[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
+        rowNo, fileName, submissible, notes, screenshotList = data
+        tk.Label(self.fileTableFrame, text=rowNo, anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
+        tk.Label(self.fileTableFrame, text=fileName, anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
         tk.Radiobutton(self.fileTableFrame, text="Submissible", command=self.UpdateSubmissibility(currentRowNo), background="#FAF9F6").grid(row=currentRowNo, column=2, sticky="ew")
         tk.Radiobutton(self.fileTableFrame, text="Non-Submissible", command=self.UpdateSubmissibility(currentRowNo), background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
-        tk.Label(self.fileTableFrame, text=data[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=4, sticky="ew")
+        tk.Label(self.fileTableFrame, text=notes, anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=4, sticky="ew")
         tk.Button(self.fileTableFrame, text="Edit", command=lambda:[self.addNotes()], background="#FAF9F6").grid(row=currentRowNo, column=5, sticky="ew")
-        
+        tk.Button(self.fileTableFrame, text="Take", command=lambda:[self.addScreenshot(controller)], background="#FAF9F6").grid(row=currentRowNo, column=6, sticky="ew")
+        if len(screenshotList) > 0:
+            tk.Button(self.fileTableFrame, text="View", command=lambda:[self.viewScreenshots(controller)], background="#FAF9F6").grid(row=currentRowNo, column=7, sticky="ew")
+        tk.Button(self.fileTableFrame, text="View", command=lambda:[self.viewChanges(controller)], background="#FAF9F6").grid(row=currentRowNo, column=8, sticky="ew")
+
         self.rowNo.set(currentRowNo+1)
 
         # Test button for adding to list
@@ -262,6 +282,24 @@ class EventLog(tk.Frame):
         #Create a Button Widget in the Toplevel Window
         button= tk.Button(popup, text="Done", command=lambda:self.editNotes(popup,noteEdit.get(),itemno, controller))
         button.pack(side = "bottom", pady=5)
+
+    # Take snapshot, add the name of the snap to list
+    def addScreenshot(self, rowNo, controller):
+        screenshot = pyautogui.screenshot()
+        now = datetime.now()
+        sgTime = pytz.timezone("Asia/Singapore")
+        nowSgTime = sgTime.localize(now)
+        screenshotName = "screenshots\\" + controller.eventData[rowNo-1][1] + "_" + str(nowSgTime.strftime("%Y-%m-%d_%H.%M.%S")) + ".png"
+        screenshot.save(screenshotName)
+        controller.eventData[rowNo-1][4].append(screenshotName)
+
+    # For each filename in list, open a new window with the image, or just pack it in 1 new window
+    # If screenshots folder is being monitored will create more event logs
+    def viewScreenshots(self, rowNo, controller):
+        pass
+
+    def viewChanges(self, controller):
+        print("I have no idea how to do this")
 
     def onFrameConfigure(self, event):
         '''Reset the scroll region to encompass the inner frame'''
@@ -301,12 +339,12 @@ class Controller(tk.Tk):
 
         # Data
         self.eventData = [
-            [1, "testfile.mp4", "Submissible", tk.StringVar()],
-            [2, "testfile1.mp4", "Submissible", tk.StringVar()],
-            [3, "testfile2.mp4", "Non-Submissible", tk.StringVar()],
-            [4, "testfile3.mp4", "Submissible", tk.StringVar()],
-            [5, "testfile1.mp4", "Submissible", tk.StringVar()],
-            [6, "testfile2.mp4", "Non-Submissible", tk.StringVar()],
+            [1, "testfile.mp4", "Submissible", tk.StringVar(), []],
+            [2, "testfile1.mp4", "Submissible", tk.StringVar(), []],
+            [3, "testfile2.mp4", "Non-Submissible", tk.StringVar(), []],
+            [4, "testfile3.mp4", "Submissible", tk.StringVar(), []],
+            [5, "testfile1.mp4", "Submissible", tk.StringVar(), []],
+            [6, "testfile2.mp4", "Non-Submissible", tk.StringVar(), []],
         ]
 
         self.wm_title("The Watcher")
