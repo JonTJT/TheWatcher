@@ -8,12 +8,31 @@ from datetime import datetime
 
 class MainMenu(tk.Frame):
     def __init__(self, parent, controller):
+        self.folderSelected = tk.BooleanVar()
+        self.folderSelected.set(False)
         tk.Frame.__init__(self, parent)
         tk.Label(self,text="Select the folder that will be used in the investigation.").pack(fill="both", expand=True)
         tk.Label(self,textvariable= controller.selectedFolder).pack(fill="both", expand=True)
-        tk.Button(self,text="Select Folder", command=lambda:[FolderSelect(controller,self)]).pack(fill="both", expand=True)
-        self.startButton = tk.Button(self,text="Begin Investigation", state="disabled", command=lambda:[BeginInvestigation(controller)])
+        tk.Button(self,text="Select Folder", command=lambda:[self.FolderSelect(controller)]).pack(fill="both", expand=True)
+        self.startButton = tk.Button(self,text="Begin Investigation", state="disabled", command=lambda:[controller.BeginInvestigation(), controller.loadingScreen()])
         self.startButton.pack(fill="both", expand=True)
+
+    # Prompts user to select folder
+    def FolderSelect(self, controller):
+        self.startButton["state"] = "disabled"
+        folderName = filedialog.askdirectory()
+        if os.path.isdir(folderName):
+            self.folderSelected.set(True)
+            controller.selectedFolder.set(folderName)
+
+        # Set start button to be active
+        if self.folderSelected.get():
+            self.startButton["state"] = "normal"
+
+    # Check status of completion for loading
+    def LoadingTracker(self, controller):
+        while self.investigationActive.get() == False:
+            pass
 
 class FileLog(tk.Frame):
     def __init__(self, parent, controller):
@@ -30,7 +49,7 @@ class FileLog(tk.Frame):
 
         # Timer to track investigation
         tk.Label(self,textvariable= controller.timer).pack(fill="both", expand=True)
-        tk.Button(self,text="End Investigation", command=lambda:[EndInvestigation(controller)]).pack(fill="both", expand=True)
+        tk.Button(self,text="End Investigation", command=lambda:[controller.EndInvestigation()]).pack(fill="both", expand=True)
 
         # Create file table
         self.canvas = tk.Canvas(self, borderwidth=0, background="#FAF9F6")
@@ -40,8 +59,7 @@ class FileLog(tk.Frame):
 
         self.vsb.pack(side="right", fill="y")
         self.canvas.pack(side="left", fill="both", expand=True)
-        self.frame_id = self.canvas.create_window(0, 0, window=self.fileTableFrame, anchor="nw",
-                                  tags="self.fileTableFrame")
+        self.frame_id = self.canvas.create_window(0, 0, window=self.fileTableFrame, anchor="nw",tags="self.fileTableFrame")
 
         self.canvas.bind("<Configure>", self.on_canvas_configure)
         self.fileTableFrame.bind("<Configure>", self.onFrameConfigure)
@@ -55,7 +73,7 @@ class FileLog(tk.Frame):
 
         self.populateData(controller)
 
-        # Test button to append new entry
+        # To remove: Test button to append new file entry
         #tk.Button(self, text="Append", anchor="w", command=lambda:[self.addNewFile([0, 1, 2, tk.StringVar()], controller)], background="#FAF9F6").pack(side="bottom")
 
     # Populate table with take data, to remove before deployment
@@ -142,8 +160,8 @@ class FileLog(tk.Frame):
         
 class EventLog(tk.Frame):
     def __init__(self, parent, controller):
-        self.rowNo = tk.IntVar()
-        self.rowNo.set(1)
+        self.eventRowNo = tk.IntVar()
+        self.eventRowNo.set(1)
 
         tk.Frame.__init__(self, parent)
         tk.Button(self,text="View Event Log", command=lambda:[controller.ShowFrame(EventLog)]).pack(fill="both", expand=True)
@@ -155,7 +173,76 @@ class EventLog(tk.Frame):
 
         # Timer to track investigation
         tk.Label(self,textvariable= controller.timer).pack(fill="both", expand=True)
-        tk.Button(self,text="End Investigation", command=lambda:[EndInvestigation(controller)]).pack(fill="both", expand=True)
+        tk.Button(self,text="End Investigation", command=lambda:[controller.EndInvestigation()]).pack(fill="both", expand=True)
+
+        # Create file table
+        self.canvas = tk.Canvas(self, borderwidth=0, background="#FAF9F6")
+        self.eventsTableFrame = tk.Frame(self.canvas, background="#FAF9F6")
+        self.vsb = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.vsb.set)
+
+        self.vsb.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.frame_id = self.canvas.create_window(0, 0, window=self.eventsTableFrame, anchor="nw",
+                                  tags="self.eventsTableFrame")
+
+        self.canvas.bind("<Configure>", self.on_canvas_configure)
+        self.eventsTableFrame.bind("<Configure>", self.onFrameConfigure)
+
+        # Headers
+        tk.Label(self.eventsTableFrame, text="No.", anchor="w", background="#FAF9F6").grid(row=0, column=0)
+        tk.Label(self.eventsTableFrame, text="Time", anchor="w", background="#FAF9F6").grid(row=0, column=1)
+        tk.Label(self.eventsTableFrame, text="File name and path", anchor="w", background="#FAF9F6").grid(row=0, column=2, ipadx=5)
+        tk.Label(self.eventsTableFrame, text="Event", anchor="w", background="#FAF9F6").grid(row=0, column=3)
+
+        self.populateData(controller)
+
+        # To remove: Test button to add new event
+        #tk.Button(self.eventsTableFrame, text="Append", anchor="w", command=lambda:[self.addNewEvent(["testfile.mp3", "File opened"],controller)], background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
+
+
+    def UpdateSubmissibility(self, rowNo):
+        print(rowNo)
+        return None
+
+    def populateData(self, controller):
+        self.eventsTableFrame.grid_columnconfigure(0, weight=1)
+        # Populate table
+        for row in controller.eventData:
+            self.submissibility = StringVar()
+            currentRowNo = self.eventRowNo.get()
+            tk.Label(self.eventsTableFrame, text=row[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
+            tk.Label(self.eventsTableFrame, text=row[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
+            tk.Label(self.eventsTableFrame, text=row[2], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=2, sticky="ew")
+            tk.Label(self.eventsTableFrame, text=row[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
+            self.eventRowNo.set(currentRowNo+1)
+
+        currentRowNo = self.eventRowNo.get()
+    # To add a new event item:
+    def addNewEvent(self, data, controller):
+        # Add timestamp and index to data
+        now = datetime.now()
+        data.insert(0,now.strftime("%d/%m/%Y %H:%M:%S"))
+        currentRowNo = self.eventRowNo.get()
+        data.insert(0,currentRowNo)
+
+        # Add the new data to the database
+        controller.eventData.append(data)
+
+        tk.Label(self.eventsTableFrame, text=data[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
+        tk.Label(self.eventsTableFrame, text=data[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
+        tk.Label(self.eventsTableFrame, text=data[2], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=2, sticky="ew")
+        tk.Label(self.eventsTableFrame, text=data[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
+        
+        self.eventRowNo.set(currentRowNo+1)
+
+    def onFrameConfigure(self, event):
+        '''Reset the scroll region to encompass the inner frame'''
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    # Function to resize frame to fit the canvas
+    def on_canvas_configure(self, event):
+        self.canvas.itemconfig(self.frame_id, width=event.width)
 
 class Report(tk.Frame):
     def __init__(self, parent, controller):
@@ -174,6 +261,7 @@ class Controller(tk.Tk):
         self.investigatedFileCountString = tk.StringVar()
         self.startTime = tk.StringVar()
         self.timer = tk.StringVar()
+        self.percentageCompletion = tk.StringVar()
 
         # Data for filelog and event log (To remove data before deployment)
         self.fileData = [
@@ -183,6 +271,15 @@ class Controller(tk.Tk):
             [4, "testfile3.mp4", "Submissible", tk.StringVar()],
             [5, "testfile1.mp4", "Submissible", tk.StringVar()],
             [6, "testfile2.mp4", "Non-Submissible", tk.StringVar()],
+        ]
+
+        self.eventData = [
+            [1, "02/11/2022 19:21:05", "testfile.mp4", "File opened", tk.StringVar()],
+            [2, "02/11/2022 19:21:07", "testfile1.mp4", "File opened", tk.StringVar()],
+            [3, "02/11/2022 19:21:10", "testfile2.mp4", "File modified", tk.StringVar()],
+            [4, "02/11/2022 19:21:12", "testfile3.mp4", "File opened", tk.StringVar()],
+            [5, "02/11/2022 19:21:15", "testfile1.mp4", "File opened", tk.StringVar()],
+            [6, "02/11/2022 19:21:16", "testfile2.mp4", "File modified", tk.StringVar()],
         ]
 
         self.wm_title("The Watcher")
@@ -208,18 +305,56 @@ class Controller(tk.Tk):
         # raises the current frame to the top
         frame.tkraise()
 
-# File counter function to count number of files within folder and all subfolders.
-def countFiles(filepath):
-    counter = sum([len(files) for r, d, files in os.walk(filepath)])
-    return counter
+    # Timer function for the investigation
+    def Timer(self, starttime):
+        while self.investigationActive.get() == True:
+            currenttime = int(round(time.time() * 100)) - starttime
+            self.timer.set('Time elapsed: {:02d}:{:02d}:{:02d}'.format((currenttime // 100) // 60 // 60, (currenttime // 100) // 60,(currenttime // 100) % 60))
+            time.sleep(1)
+        print("Timer exited")
 
-# Timer function for the investigation
-def Timer(controller, starttime):
-    while controller.investigationActive.get() == True:
-        currenttime = int(round(time.time() * 100)) - starttime
-        controller.timer.set('Time elapsed: {:02d}:{:02d}:{:02d}'.format((currenttime // 100) // 60 // 60, (currenttime // 100) // 60,(currenttime // 100) % 60))
-        time.sleep(1)
-    print("Timer exited")
+    # File counter function to count number of files within folder and all subfolders.
+    def countFiles(self, filepath):
+        counter = sum([len(files) for r, d, files in os.walk(filepath)])
+        return counter
+
+    # To start investigation
+    def BeginInvestigation(self):
+        now = datetime.now()
+        self.startTime.set("Start time: " + now.strftime("%d/%m/%Y %H:%M:%S"))
+        starttime = int(round(time.time() * 100))
+        
+        # Start timer thread
+        timerThread = threading.Thread(target=self.Timer, args=[starttime], daemon=True)
+        timerThread.start()
+
+        # Set file count
+        self.totalFileCount.set(self.countFiles(self.selectedFolder.get()))
+        self.investigatedFileCountString.set("Files investigated: "+ "0/" + str(self.totalFileCount.get()))
+        self.selectedFolder.set("Selected folder: "+ self.selectedFolder.get())
+
+        self.investigationActive.set(True)
+        self.percentageCompletion.set("100%")
+        self.loadingwindow.destroy()
+
+        self.ShowFrame(EventLog)
+
+    # Start loading screen
+    def loadingScreen(self):
+        self.loadingwindow = tk.Frame()
+        #Create a Toplevel window
+        loadingpopup= tk.Toplevel(self.loadingwindow)
+        loadingpopup.geometry("750x250")
+
+        #Loading percentage for entire program
+        tk.Label(loadingpopup,text= "Collecting hashes of all files...").pack(fill="both", expand=True)
+        tk.Label(loadingpopup,text= "Percentage complete:").pack(fill="both", expand=True)
+        tk.Label(loadingpopup, textvariable=self.percentageCompletion).pack(fill="both", expand=True)
+        
+    # End of investigation, direct user to report page
+    def EndInvestigation(self):
+        self.investigationActive.set(False)
+        self.ShowFrame(Report)
 
 # To be called when a file has been successfully investigated.
 def FileInvestigated(controller):
@@ -227,38 +362,8 @@ def FileInvestigated(controller):
     controller.investigatedFileCount.set(fileCount)
     controller.investigatedFileCountString.set("Total files investigated: " + str(fileCount) + '/' + str(controller.totalFileCount.get()))
 
-# Prompts user to select folder
-def FolderSelect(controller, menuframe):
-    folderName = filedialog.askdirectory()
-    controller.selectedFolder.set("Selected folder: "+folderName)
-    controller.investigationActive.set(True)
-
-    # Set start button to be active
-    menuframe.startButton["state"] = "normal"
-
-# To start investigation
-def BeginInvestigation(controller):
-    now = datetime.now()
-    controller.startTime.set("Start time: " + now.strftime("%d/%m/%Y %H:%M:%S"))
-    starttime = int(round(time.time() * 100))
-    
-    # Start timer thread
-    timerThread = threading.Thread(target=Timer, args=(controller, starttime), daemon=True)
-    timerThread.start()
-
-    # Set file count
-    controller.totalFileCount.set(countFiles(controller.selectedFolder.get().replace("Selected folder: ",'')))
-    controller.investigatedFileCountString.set("Files investigated: "+ "0/" + str(controller.totalFileCount.get()))
-
-    controller.ShowFrame(EventLog)
-
-def EndInvestigation(controller):
-    controller.investigationActive.set(False)
-    controller.ShowFrame(Report)
 
 if __name__ == "__main__":
-    investigationActive = False
-
     mainProgram = Controller()
     mainProgram.geometry("800x400")
     mainProgram.mainloop()
