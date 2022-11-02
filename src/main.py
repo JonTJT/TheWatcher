@@ -8,37 +8,31 @@ from datetime import datetime
 
 class MainMenu(tk.Frame):
     def __init__(self, parent, controller):
+        self.folderSelected = tk.BooleanVar()
+        self.folderSelected.set(False)
         tk.Frame.__init__(self, parent)
         tk.Label(self,text="Select the folder that will be used in the investigation.").pack(fill="both", expand=True)
         tk.Label(self,textvariable= controller.selectedFolder).pack(fill="both", expand=True)
         tk.Button(self,text="Select Folder", command=lambda:[self.FolderSelect(controller)]).pack(fill="both", expand=True)
-        self.startButton = tk.Button(self,text="Begin Investigation", state="disabled", command=lambda:[controller.BeginInvestigation()])
+        self.startButton = tk.Button(self,text="Begin Investigation", state="disabled", command=lambda:[controller.BeginInvestigation(), controller.loadingScreen()])
         self.startButton.pack(fill="both", expand=True)
-
-    # Start loading screen
-    def addNotes(self, itemno, controller):
-        window = tk.Frame()
-        #Create a Toplevel window
-        popup= tk.Toplevel(window)
-        popup.geometry("750x250")
-
-        #Create an Entry Widget in the Toplevel window
-        noteEdit= tk.Entry(popup)
-        noteEdit.insert(0, controller.fileData[itemno-1][3].get())
-        noteEdit.place(width=400, height=150)
-
-        #Create a Button Widget in the Toplevel Window
-        button= tk.Button(popup, text="Done", command=lambda:self.editNotes(popup,noteEdit.get(),itemno, controller))
-        button.pack(side = "bottom", pady=5)
 
     # Prompts user to select folder
     def FolderSelect(self, controller):
+        self.startButton["state"] = "disabled"
         folderName = filedialog.askdirectory()
-        controller.investigationActive.set(True)
+        if os.path.isdir(folderName):
+            self.folderSelected.set(True)
+            controller.selectedFolder.set(folderName)
 
         # Set start button to be active
-        self.startButton["state"] = "normal"
+        if self.folderSelected.get():
+            self.startButton["state"] = "normal"
 
+    # Check status of completion for loading
+    def LoadingTracker(self, controller):
+        while self.investigationActive.get() == False:
+            pass
 
 class FileLog(tk.Frame):
     def __init__(self, parent, controller):
@@ -79,7 +73,7 @@ class FileLog(tk.Frame):
 
         self.populateData(controller)
 
-        # Test button to append new entry
+        # To remove: Test button to append new file entry
         #tk.Button(self, text="Append", anchor="w", command=lambda:[self.addNewFile([0, 1, 2, tk.StringVar()], controller)], background="#FAF9F6").pack(side="bottom")
 
     # Populate table with take data, to remove before deployment
@@ -203,6 +197,10 @@ class EventLog(tk.Frame):
 
         self.populateData(controller)
 
+        # To remove: Test button to add new event
+        #tk.Button(self.eventsTableFrame, text="Append", anchor="w", command=lambda:[self.addNewEvent(["testfile.mp3", "File opened"],controller)], background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
+
+
     def UpdateSubmissibility(self, rowNo):
         print(rowNo)
         return None
@@ -220,8 +218,6 @@ class EventLog(tk.Frame):
             self.eventRowNo.set(currentRowNo+1)
 
         currentRowNo = self.eventRowNo.get()
-        tk.Button(self.eventsTableFrame, text="Append", anchor="w", command=lambda:[self.addNewEvent(["testfile.mp3", "File opened"],controller)], background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
-
     # To add a new event item:
     def addNewEvent(self, data, controller):
         # Add timestamp and index to data
@@ -265,6 +261,7 @@ class Controller(tk.Tk):
         self.investigatedFileCountString = tk.StringVar()
         self.startTime = tk.StringVar()
         self.timer = tk.StringVar()
+        self.percentageCompletion = tk.StringVar()
 
         # Data for filelog and event log (To remove data before deployment)
         self.fileData = [
@@ -336,8 +333,24 @@ class Controller(tk.Tk):
         self.investigatedFileCountString.set("Files investigated: "+ "0/" + str(self.totalFileCount.get()))
         self.selectedFolder.set("Selected folder: "+ self.selectedFolder.get())
 
+        self.investigationActive.set(True)
+        self.percentageCompletion.set("100%")
+        self.loadingwindow.destroy()
+
         self.ShowFrame(EventLog)
 
+    # Start loading screen
+    def loadingScreen(self):
+        self.loadingwindow = tk.Frame()
+        #Create a Toplevel window
+        loadingpopup= tk.Toplevel(self.loadingwindow)
+        loadingpopup.geometry("750x250")
+
+        #Loading percentage for entire program
+        tk.Label(loadingpopup,text= "Collecting hashes of all files...").pack(fill="both", expand=True)
+        tk.Label(loadingpopup,text= "Percentage complete:").pack(fill="both", expand=True)
+        tk.Label(loadingpopup, textvariable=self.percentageCompletion).pack(fill="both", expand=True)
+        
     # End of investigation, direct user to report page
     def EndInvestigation(self):
         self.investigationActive.set(False)
@@ -351,8 +364,6 @@ def FileInvestigated(controller):
 
 
 if __name__ == "__main__":
-    investigationActive = False
-
     mainProgram = Controller()
     mainProgram.geometry("800x400")
     mainProgram.mainloop()
