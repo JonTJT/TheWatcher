@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from tkinter import StringVar
 from tkinter import filedialog
 import time
@@ -14,7 +15,7 @@ class MainMenu(tk.Frame):
         tk.Label(self,text="Select the folder that will be used in the investigation.").pack(fill="both", expand=True)
         tk.Label(self,textvariable= controller.selectedFolder).pack(fill="both", expand=True)
         tk.Button(self,text="Select Folder", command=lambda:[self.FolderSelect(controller)]).pack(fill="both", expand=True)
-        self.startButton = tk.Button(self,text="Begin Investigation", state="disabled", command=lambda:[controller.BeginInvestigation(), controller.loadingScreen()])
+        self.startButton = tk.Button(self,text="Begin Investigation", state="disabled", command=lambda:[controller.BeginInvestigation()])
         self.startButton.pack(fill="both", expand=True)
 
     # Prompts user to select folder
@@ -261,7 +262,7 @@ class Controller(tk.Tk):
         self.investigatedFileCountString = tk.StringVar()
         self.startTime = tk.StringVar()
         self.timer = tk.StringVar()
-        self.percentageCompletion = tk.StringVar()
+        self.percentageCompletion = tk.IntVar()
 
         # Data for filelog and event log (To remove data before deployment)
         self.fileData = [
@@ -316,41 +317,48 @@ class Controller(tk.Tk):
     # File counter function to count number of files within folder and all subfolders.
     def countFiles(self, filepath):
         counter = sum([len(files) for r, d, files in os.walk(filepath)])
+        self.totalFileCount.set(counter)
+        print(counter)
         return counter
 
     # To start investigation
     def BeginInvestigation(self):
+        time.sleep(2)
+        self.LoadingBar()
         now = datetime.now()
         self.startTime.set("Start time: " + now.strftime("%d/%m/%Y %H:%M:%S"))
         starttime = int(round(time.time() * 100))
-        
+
         # Start timer thread
         timerThread = threading.Thread(target=self.Timer, args=[starttime], daemon=True)
         timerThread.start()
 
         # Set file count
-        self.totalFileCount.set(self.countFiles(self.selectedFolder.get()))
+        #countFilesThread = threading.Thread(target=self.countFiles, args=[self.selectedFolder.get()], daemon=True)
+        #countFilesThread.start()
+        self.countFiles(self.selectedFolder.get())
         self.investigatedFileCountString.set("Files investigated: "+ "0/" + str(self.totalFileCount.get()))
         self.selectedFolder.set("Selected folder: "+ self.selectedFolder.get())
 
         self.investigationActive.set(True)
-        self.percentageCompletion.set("100%")
-        self.loadingwindow.destroy()
-
         self.ShowFrame(EventLog)
-
-    # Start loading screen
-    def loadingScreen(self):
-        self.loadingwindow = tk.Frame()
+        
+    def LoadingBar(self):
         #Create a Toplevel window
-        loadingpopup= tk.Toplevel(self.loadingwindow)
-        loadingpopup.geometry("750x250")
-
+        loadingpopup= tk.Toplevel()
+        loadingpopup.geometry("300x200")
         #Loading percentage for entire program
         tk.Label(loadingpopup,text= "Collecting hashes of all files...").pack(fill="both", expand=True)
-        tk.Label(loadingpopup,text= "Percentage complete:").pack(fill="both", expand=True)
-        tk.Label(loadingpopup, textvariable=self.percentageCompletion).pack(fill="both", expand=True)
-        
+        tk.Label(loadingpopup,text= "Please wait").pack(fill="both", expand=True)
+        loadingpopup.update()
+        checkProgressThread = threading.Thread(target=self.checkLoadingProgress, args=[loadingpopup], daemon=True)
+        checkProgressThread.start()
+
+    def checkLoadingProgress(self, loadingpopup):
+        while (self.investigationActive.get() == False):
+            loadingpopup.update()
+        loadingpopup.destroy()
+
     # End of investigation, direct user to report page
     def EndInvestigation(self):
         self.investigationActive.set(False)
@@ -361,7 +369,6 @@ def FileInvestigated(controller):
     fileCount = controller.investigatedFileCount.get()+1
     controller.investigatedFileCount.set(fileCount)
     controller.investigatedFileCountString.set("Total files investigated: " + str(fileCount) + '/' + str(controller.totalFileCount.get()))
-
 
 if __name__ == "__main__":
     mainProgram = Controller()
