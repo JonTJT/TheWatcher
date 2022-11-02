@@ -11,9 +11,34 @@ class MainMenu(tk.Frame):
         tk.Frame.__init__(self, parent)
         tk.Label(self,text="Select the folder that will be used in the investigation.").pack(fill="both", expand=True)
         tk.Label(self,textvariable= controller.selectedFolder).pack(fill="both", expand=True)
-        tk.Button(self,text="Select Folder", command=lambda:[FolderSelect(controller,self)]).pack(fill="both", expand=True)
-        self.startButton = tk.Button(self,text="Begin Investigation", state="disabled", command=lambda:[BeginInvestigation(controller)])
+        tk.Button(self,text="Select Folder", command=lambda:[self.FolderSelect(controller)]).pack(fill="both", expand=True)
+        self.startButton = tk.Button(self,text="Begin Investigation", state="disabled", command=lambda:[controller.BeginInvestigation()])
         self.startButton.pack(fill="both", expand=True)
+
+    # Start loading screen
+    def addNotes(self, itemno, controller):
+        window = tk.Frame()
+        #Create a Toplevel window
+        popup= tk.Toplevel(window)
+        popup.geometry("750x250")
+
+        #Create an Entry Widget in the Toplevel window
+        noteEdit= tk.Entry(popup)
+        noteEdit.insert(0, controller.fileData[itemno-1][3].get())
+        noteEdit.place(width=400, height=150)
+
+        #Create a Button Widget in the Toplevel Window
+        button= tk.Button(popup, text="Done", command=lambda:self.editNotes(popup,noteEdit.get(),itemno, controller))
+        button.pack(side = "bottom", pady=5)
+
+    # Prompts user to select folder
+    def FolderSelect(self, controller):
+        folderName = filedialog.askdirectory()
+        controller.investigationActive.set(True)
+
+        # Set start button to be active
+        self.startButton["state"] = "normal"
+
 
 class FileLog(tk.Frame):
     def __init__(self, parent, controller):
@@ -30,7 +55,7 @@ class FileLog(tk.Frame):
 
         # Timer to track investigation
         tk.Label(self,textvariable= controller.timer).pack(fill="both", expand=True)
-        tk.Button(self,text="End Investigation", command=lambda:[EndInvestigation(controller)]).pack(fill="both", expand=True)
+        tk.Button(self,text="End Investigation", command=lambda:[controller.EndInvestigation()]).pack(fill="both", expand=True)
 
         # Create file table
         self.canvas = tk.Canvas(self, borderwidth=0, background="#FAF9F6")
@@ -154,7 +179,7 @@ class EventLog(tk.Frame):
 
         # Timer to track investigation
         tk.Label(self,textvariable= controller.timer).pack(fill="both", expand=True)
-        tk.Button(self,text="End Investigation", command=lambda:[EndInvestigation(controller)]).pack(fill="both", expand=True)
+        tk.Button(self,text="End Investigation", command=lambda:[controller.EndInvestigation()]).pack(fill="both", expand=True)
 
 class Report(tk.Frame):
     def __init__(self, parent, controller):
@@ -207,18 +232,40 @@ class Controller(tk.Tk):
         # raises the current frame to the top
         frame.tkraise()
 
-# File counter function to count number of files within folder and all subfolders.
-def countFiles(filepath):
-    counter = sum([len(files) for r, d, files in os.walk(filepath)])
-    return counter
+    # Timer function for the investigation
+    def Timer(self, starttime):
+        while self.investigationActive.get() == True:
+            currenttime = int(round(time.time() * 100)) - starttime
+            self.timer.set('Time elapsed: {:02d}:{:02d}:{:02d}'.format((currenttime // 100) // 60 // 60, (currenttime // 100) // 60,(currenttime // 100) % 60))
+            time.sleep(1)
+        print("Timer exited")
 
-# Timer function for the investigation
-def Timer(controller, starttime):
-    while controller.investigationActive.get() == True:
-        currenttime = int(round(time.time() * 100)) - starttime
-        controller.timer.set('Time elapsed: {:02d}:{:02d}:{:02d}'.format((currenttime // 100) // 60 // 60, (currenttime // 100) // 60,(currenttime // 100) % 60))
-        time.sleep(1)
-    print("Timer exited")
+    # File counter function to count number of files within folder and all subfolders.
+    def countFiles(self, filepath):
+        counter = sum([len(files) for r, d, files in os.walk(filepath)])
+        return counter
+
+    # To start investigation
+    def BeginInvestigation(self):
+        now = datetime.now()
+        self.startTime.set("Start time: " + now.strftime("%d/%m/%Y %H:%M:%S"))
+        starttime = int(round(time.time() * 100))
+        
+        # Start timer thread
+        timerThread = threading.Thread(target=self.Timer, args=[starttime], daemon=True)
+        timerThread.start()
+
+        # Set file count
+        self.totalFileCount.set(self.countFiles(self.selectedFolder.get()))
+        self.investigatedFileCountString.set("Files investigated: "+ "0/" + str(self.totalFileCount.get()))
+        self.selectedFolder.set("Selected folder: "+ self.selectedFolder.get())
+
+        self.ShowFrame(EventLog)
+
+    # End of investigation, direct user to report page
+    def EndInvestigation(self):
+        self.investigationActive.set(False)
+        self.ShowFrame(Report)
 
 # To be called when a file has been successfully investigated.
 def FileInvestigated(controller):
@@ -226,34 +273,6 @@ def FileInvestigated(controller):
     controller.investigatedFileCount.set(fileCount)
     controller.investigatedFileCountString.set("Total files investigated: " + str(fileCount) + '/' + str(controller.totalFileCount.get()))
 
-# Prompts user to select folder
-def FolderSelect(controller, menuframe):
-    folderName = filedialog.askdirectory()
-    controller.selectedFolder.set("Selected folder: "+folderName)
-    controller.investigationActive.set(True)
-
-    # Set start button to be active
-    menuframe.startButton["state"] = "normal"
-
-# To start investigation
-def BeginInvestigation(controller):
-    now = datetime.now()
-    controller.startTime.set("Start time: " + now.strftime("%d/%m/%Y %H:%M:%S"))
-    starttime = int(round(time.time() * 100))
-    
-    # Start timer thread
-    timerThread = threading.Thread(target=Timer, args=(controller, starttime), daemon=True)
-    timerThread.start()
-
-    # Set file count
-    controller.totalFileCount.set(countFiles(controller.selectedFolder.get().replace("Selected folder: ",'')))
-    controller.investigatedFileCountString.set("Files investigated: "+ "0/" + str(controller.totalFileCount.get()))
-
-    controller.ShowFrame(EventLog)
-
-def EndInvestigation(controller):
-    controller.investigationActive.set(False)
-    controller.ShowFrame(Report)
 
 if __name__ == "__main__":
     investigationActive = False
