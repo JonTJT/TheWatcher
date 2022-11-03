@@ -248,6 +248,7 @@ class Report(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         Title = tk.Label(self, text="Investigation Report").pack(fill="both", expand=True)
+        tk.Button(self,text="Generate HTML report", command=lambda:[controller.GenerateReport()]).pack(fill="both", expand=True)
 
 class Controller(tk.Tk):
     def __init__(self, *args, **kwargs):
@@ -355,6 +356,10 @@ class Controller(tk.Tk):
     def EndInvestigation(self):
         self.investigationActive.set(False)
         self.ShowFrame(Report)
+
+    # Report generation
+    def GenerateReport(self):
+        folderName = filedialog.askdirectory()
 
 # To be called when a file has been successfully investigated.
 def FileInvestigated(controller):
