@@ -8,6 +8,9 @@ import threading
 from datetime import datetime
 import pyautogui
 import pytz
+import hashlib
+import multiprocessing
+import sys
 
 class MainMenu(tk.Frame):
     def __init__(self, parent, controller):
@@ -92,6 +95,7 @@ class FileLog(tk.Frame):
 
         # Populate table
         for row in controller.fileData:
+            print("Filename", row[1])
             selectSubmissibility = StringVar()
             currentRowNo = self.rowNo.get()
 
@@ -288,14 +292,17 @@ class Controller(tk.Tk):
         self.timer = tk.StringVar()
         self.percentageCompletion = tk.IntVar()
 
+        self.hashDictMutex = multiprocessing.Lock()
+        self.hashDict = {}
+
         # Data for filelog and event log (To remove data before deployment)
         self.fileData = [
-            [1, "testfile.mp4", "Submissible", tk.StringVar(), []],
-            [2, "testfile1.mp4", "Submissible", tk.StringVar(), []],
-            [3, "testfile2.mp4", "Non-Submissible", tk.StringVar(), []],
-            [4, "testfile3.mp4", "Submissible", tk.StringVar(), []],
-            [5, "testfile1.mp4", "Submissible", tk.StringVar(), []],
-            [6, "testfile2.mp4", "Non-Submissible", tk.StringVar(), []],
+            [1, "C:\\Users\\wizar\\Videos\\Captures\\1009_Video_P8_Team06.mp4", "Submissible", tk.StringVar(), []],
+            [2, "C:\\Users\\wizar\\Videos\\Captures\\a.txt", "Submissible", tk.StringVar(), []],
+            [3, "C:\\Users\\wizar\\Videos\\Captures\\horni_lmao.jpg", "Non-Submissible", tk.StringVar(), []],
+            [4, "C:\\Users\\wizar\\Videos\\Captures\\Lab1-Slides.pdf", "Non-Submissible", tk.StringVar(), []],
+            [5, "C:\\Users\\wizar\\Videos\\Captures\\vid1.mp4", "Non-Submissible", tk.StringVar(), []],
+            [6, "C:\\Users\\wizar\\Videos\\Captures\\vid2.mp4", "Non-Submissible", tk.StringVar(), []],
         ]
 
         self.eventData = [
@@ -345,7 +352,7 @@ class Controller(tk.Tk):
             time.sleep(1)
         print("Timer exited")
 
-    # File counter function to count number of files within folder and all subfolders.
+    # File counter function to count number of files within folder and all subfolders. # TODO: Depreciate after consulting the bossman
     def countFiles(self, filepath):
         counter = sum([len(files) for r, d, files in os.walk(filepath)])
         self.totalFileCount.set(counter)
@@ -364,9 +371,12 @@ class Controller(tk.Tk):
         timerThread = threading.Thread(target=self.Timer, args=[starttime], daemon=True)
         timerThread.start()
 
+        # Populating fileData
+        print(self.selectedFolder.get())
+        self.folder_loader(self.selectedFolder.get())
+        print(self.fileData)
+
         # Set file count
-        #countFilesThread = threading.Thread(target=self.countFiles, args=[self.selectedFolder.get()], daemon=True)
-        #countFilesThread.start()
         self.countFiles(self.selectedFolder.get())
         self.investigatedFileCountString.set("Files investigated: "+ "0/" + str(self.totalFileCount.get()))
         self.selectedFolder.set("Selected folder: "+ self.selectedFolder.get())
@@ -393,7 +403,47 @@ class Controller(tk.Tk):
     # End of investigation, direct user to report page
     def EndInvestigation(self):
         self.investigationActive.set(False)
+        self.hashMultithreading()
         self.ShowFrame(Report)
+
+    # Enumerates all the files in the folder specified
+    def folder_loader(self, src_path):
+        no_of_files = 0
+        file_array = []
+        fileIndex = 1
+        for root, d, files in os.walk(src_path):
+            for file in files:
+                # file_array.append(os.path.join(root,file))
+                self.fileData.append([fileIndex, os.path.join(root,file), "Non-Submissible", tk.StringVar(), []])
+                fileIndex += 1
+                sys.stdout.write(f"\r{fileIndex - 1} files loaded.")
+        # print(file_array)
+        # return generate_hash(file_array)
+
+    # Multithreaded hashing of all files marked submissible
+    def hashMultithreading(self):
+        # print(multiprocessing.cpu_count())
+        pool = multiprocessing.Pool(4)
+        for (rowNo, filepath, submissible, notes, screenshotList) in self.fileData:
+            pool.apply_async(self.hashmd5(filepath))
+        
+        pool.close()
+        pool.join()
+
+        print("Hashdict:", self.hashDict)
+
+    # Function to be threaded
+    def hashmd5(self, file):
+        with open(file,"rb") as f:
+            hash_md5 = hashlib.md5()
+            with open(file, "rb") as f:
+                for chunk in iter(lambda:f.read(4096), b""):
+                    hash_md5.update(chunk)
+            self.hashDictMutex.acquire()
+            self.hashDict[file] = hash_md5.hexdigest()
+            self.hashDictMutex.release()
+            print(self.hashDict[file]) # Debug
+            
 
 # To be called when a file has been successfully investigated.
 def FileInvestigated(controller):
