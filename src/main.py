@@ -165,7 +165,8 @@ class FileLog(tk.Frame):
         now = datetime.now()
         sgTime = pytz.timezone("Asia/Singapore")
         nowSgTime = sgTime.localize(now)
-        screenshotName = controller.screenshotFolder + "\\" + controller.fileData[rowNo-1][1] + "_" + str(nowSgTime.strftime("%Y-%m-%d_%H.%M.%S")) + ".png"
+        filename = controller.fileData[rowNo-1][1].split('\\') #controller.fileData[rowNo-1][1] issue with filename if image path is not same directory as main.py
+        screenshotName = controller.screenshotFolder + "\\" + filename[-1] + "_" + str(nowSgTime.strftime("%Y-%m-%d_%H.%M.%S")) + ".png"
         screenshot.save(screenshotName)
         controller.fileData[rowNo-1][5].append(screenshotName)
 
@@ -405,7 +406,7 @@ class Controller(tk.Tk):
     def addNewFile(self, filename):
         # Order of data: [(0)Index, (1)Full file name, (2)Submissibility, (3)Notes, (4)Metadata, (5)Screenshots]
         if (len(self.fileData) == 0):
-            newdata = [0, filename, tk.StringVar(), tk.StringVar(), {}, []]
+            newdata = [0, filename, tk.StringVar(), tk.StringVar(), meta.fileMeta(filename), []]
             self.fileData.append(newdata)
         itemnumber = self.fileData[-1][0]
         newdata = [itemnumber, filename, tk.StringVar(), tk.StringVar(), {}, []]
