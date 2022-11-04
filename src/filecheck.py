@@ -16,9 +16,6 @@ class MonitorFolder(FileSystemEventHandler):
     # def on_any_event(self, event):
     #     print(event.src_path, event.event_type)
 
-    def save_file(self, file):
-        shutil.copy2(file, "savedStates/")
-
     def hash_file(self,file):
         print("hash_file: ", file)
         result = subprocess.check_output(f'certutil -hashfile "{file}" MD5', shell=True)
