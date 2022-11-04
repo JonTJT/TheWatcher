@@ -30,8 +30,7 @@
 
         /* Next & previous buttons */
         .prev,
-        .next,
-        .close {
+        .next {
             cursor: pointer;
             position: absolute;
             top: 50%;
@@ -49,13 +48,6 @@
         /* Position the "next button" to the right */
         .next {
             right: 0;
-            border-radius: 3px 0 0 3px;
-        }
-
-        /* Position the "close button" to the right */
-                .close {
-            right: 0;
-            top: 0;
             border-radius: 3px 0 0 3px;
         }
 
@@ -234,12 +226,11 @@
                 itemdiv.appendChild(slideshowdiv)
                 var popup = document.createElement("div");
                 popup.setAttribute("id", "popupBasic")
-                popup.setAttribute("style", "visibility:shown")
+                popup.setAttribute("style", "visibility:visible")
                 popup.setAttribute("class", "slideshow-container")
                 slideshowdiv.appendChild(popup)
 
-                for (let i = 0; i < noOfPictures; i++) {
-                    console.log("wtf")
+                for (i = 0; i < noOfPictures, i++;) {
                     var mySlides = document.createElement("div");
                     mySlides.setAttribute("class", "mySlides")
                     popup.appendChild(mySlides)
@@ -247,54 +238,52 @@
                     var numbertext = document.createElement("div");
                     numbertext.setAttribute("class", "numbertext")
                     var text = document.createTextNode(i + " / " + noOfPictures)
-                    numbertext.appendChild(text)
-
                     mySlides.appendChild(numbertext)
 
                     var image = document.createElement("img");
                     image.setAttribute("src", pictureList[i])
                     image.setAttribute("style", "width:100%")
                     mySlides.appendChild(image)
+
+                    // Buttons
+                    var previous = document.createElement("a");
+                    previous.setAttribute("class", "prev")
+                    previous.setAttribute("onclick", "plusSlides(-1)")
+                    mySlides.appendChild(previous)
+                    var next = document.createElement("a");
+                    next.setAttribute("class", "next")
+                    next.setAttribute("onclick", "plusSlides(-1)")
+                    mySlides.appendChild(previous)
+                    var close = document.createElement("a");
+                    close.setAttribute("class", "close")
+                    close.setAttribute("onclick", "closeSlideshow()")
+                    mySlides.appendChild(previous)
                 }
 
-                // Buttons
-                var previous = document.createElement("a");
-                previous.setAttribute("class", "prev")
-                previous.setAttribute("onclick", "plusSlides(-1)")
-                mySlides.appendChild(previous)
-                var next = document.createElement("a");
-                next.setAttribute("class", "next")
-                next.setAttribute("onclick", "plusSlides(-1)")
-                mySlides.appendChild(previous)
-                var close = document.createElement("a");
-                close.setAttribute("class", "close")
-                close.setAttribute("onclick", "closeSlideshow('"+ divid +"')")
-                popup.appendChild(previous)
-                popup.appendChild(next)
-                popup.appendChild(close)
-
+                console.log("u reach here");
                 // Menu
                 var menudiv = document.createElement("div");
                 menudiv.setAttribute("style", "text-align:center")
-                slideshowdiv.appendChild(menudiv)
+                popup.appendChild(menudiv)
+                console.log("u reach here2");
 
-                for (y = 1; y < noOfPictures + 1; y++) {
+                for (y = 1; y < noOfPictures + 1, y++;) {
                     var dot = document.createElement("span");
                     dot.setAttribute("class", "dot")
                     var onclickstring = "currentSlide(" + y.toString() + ")"
                     dot.setAttribute("onclick", onclickstring)
                     menudiv.appendChild(dot)
+                    if (y == noOfPictures) {
+                        break
+                    }
                 }
-                currentSlide(1)
             }
         }
 
-        function closeSlideshow(elementid) {
-            console.log(elementid)
-            const element = document.getElementById(elementid);
-            while (element.firstChild) {
-                element.removeChild(element.lastChild);
-            }
+        function closeSlideshow() {
+            var popup = document.getElementById("popupBasic");
+            popup.style.visibility = "hidden";
+            console.log(popup.style.visibility);
         }
 
     </script>
