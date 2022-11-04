@@ -407,7 +407,11 @@ class Controller(tk.Tk):
     def addNewFile(self, filename):
         # Order of data: [(0)Index, (1)Full file name, (2)Submissibility, (3)Notes, (4)Metadata, (5)Screenshots]
         if (len(self.fileData) == 0):
-            newdata = [0, filename, tk.StringVar(), tk.StringVar(), meta.fileMeta(filename), []]
+            newdata = [1, filename, tk.StringVar(), tk.StringVar(), meta.fileMeta(filename), []]
+            self.fileData.append(newdata)
+        else:
+            itemnumber = self.fileData[-1][0]+1
+            newdata = [itemnumber, filename, tk.StringVar(), tk.StringVar(), meta.fileMeta(filename), []]
             self.fileData.append(newdata)
 
     # End of investigation, direct user to report page
