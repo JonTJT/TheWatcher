@@ -6,6 +6,8 @@ import time
 import os
 import threading
 from datetime import datetime
+import pyautogui
+import pytz
 
 class MainMenu(tk.Frame):
     def __init__(self, parent, controller):
@@ -71,6 +73,7 @@ class FileLog(tk.Frame):
         tk.Label(self.fileTableFrame, text="Classification", anchor="w", background="#FAF9F6").grid(row=0, column=2)
         tk.Label(self.fileTableFrame, text="Notes", anchor="w", background="#FAF9F6").grid(row=0, column=3)
         tk.Label(self.fileTableFrame, text="Edit", anchor="w", background="#FAF9F6").grid(row=0, column=4)
+        tk.Label(self.fileTableFrame, text="Screenshot", anchor="w", background="#FAF9F6").grid(row=0, column=5)
 
         self.populateData(controller)
 
@@ -99,6 +102,7 @@ class FileLog(tk.Frame):
             tk.OptionMenu( self.fileTableFrame , selectSubmissibility , *options).grid(row=currentRowNo, column=2)
             tk.Label(self.fileTableFrame, textvariable=row[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
             tk.Button(self.fileTableFrame, text="Edit", command=lambda itemNo = currentRowNo:[self.addNotes(itemNo, controller)]).grid(row=currentRowNo, column=4, sticky="ew")
+            tk.Button(self.fileTableFrame, text="Take", command=lambda x=row[0]:[self.addScreenshot(x, controller)], background="#FAF9F6").grid(row=currentRowNo, column=5, sticky="ew")
 
             self.rowNo.set(currentRowNo+1)
 
@@ -127,6 +131,7 @@ class FileLog(tk.Frame):
         tk.OptionMenu( self.fileTableFrame , selectSubmissibility , *options).grid(row=currentRowNo, column=2)
         tk.Label(self.fileTableFrame, textvariable=data[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
         tk.Button(self.fileTableFrame, text="Edit", command=lambda itemNo = currentRowNo:[self.addNotes(itemNo, controller)]).grid(row=currentRowNo, column=4, sticky="ew")
+        tk.Button(self.fileTableFrame, text="Take", command=lambda x=data[0]:[self.addScreenshot(x, controller)], background="#FAF9F6").grid(row=currentRowNo, column=5, sticky="ew")
 
         self.rowNo.set(currentRowNo+1)
 
@@ -150,6 +155,25 @@ class FileLog(tk.Frame):
         #Create a Button Widget in the Toplevel Window
         button= tk.Button(popup, text="Done", command=lambda:self.editNotes(popup,noteEdit.get(),itemno, controller))
         button.pack(side = "bottom", pady=5)
+
+    def addScreenshot(self, rowNo, controller):
+        # Minimize window
+        controller.iconify()
+        time.sleep(0.5)
+
+        # Screenshot
+        screenshot = pyautogui.screenshot()
+        now = datetime.now()
+        sgTime = pytz.timezone("Asia/Singapore")
+        nowSgTime = sgTime.localize(now)
+        screenshotName = controller.screenshotFolder + "\\" + controller.fileData[rowNo-1][1] + "_" + str(nowSgTime.strftime("%Y-%m-%d_%H.%M.%S")) + ".png"
+        screenshot.save(screenshotName)
+        controller.fileData[rowNo-1][4].append(screenshotName)
+        print(controller.fileData[rowNo-1][4])
+
+        # Open window
+        time.sleep(0.5)
+        controller.deiconify()
 
     def onFrameConfigure(self, event):
         '''Reset the scroll region to encompass the inner frame'''
@@ -266,12 +290,12 @@ class Controller(tk.Tk):
 
         # Data for filelog and event log (To remove data before deployment)
         self.fileData = [
-            [1, "testfile.mp4", "Submissible", tk.StringVar()],
-            [2, "testfile1.mp4", "Submissible", tk.StringVar()],
-            [3, "testfile2.mp4", "Non-Submissible", tk.StringVar()],
-            [4, "testfile3.mp4", "Submissible", tk.StringVar()],
-            [5, "testfile1.mp4", "Submissible", tk.StringVar()],
-            [6, "testfile2.mp4", "Non-Submissible", tk.StringVar()],
+            [1, "testfile.mp4", "Submissible", tk.StringVar(), []],
+            [2, "testfile1.mp4", "Submissible", tk.StringVar(), []],
+            [3, "testfile2.mp4", "Non-Submissible", tk.StringVar(), []],
+            [4, "testfile3.mp4", "Submissible", tk.StringVar(), []],
+            [5, "testfile1.mp4", "Submissible", tk.StringVar(), []],
+            [6, "testfile2.mp4", "Non-Submissible", tk.StringVar(), []],
         ]
 
         self.eventData = [
@@ -282,6 +306,13 @@ class Controller(tk.Tk):
             [5, "02/11/2022 19:21:15", "testfile1.mp4", "File opened", tk.StringVar()],
             [6, "02/11/2022 19:21:16", "testfile2.mp4", "File modified", tk.StringVar()],
         ]
+
+        # Create directory to save screenshots
+        now = datetime.now()
+        sgTime = pytz.timezone("Asia/Singapore")
+        nowSgTime = sgTime.localize(now)
+        self.screenshotFolder = "TheWatcherScreenshots" + "_" + str(nowSgTime.strftime("%Y-%m-%d_%H.%M.%S"))
+        os.mkdir(self.screenshotFolder)
 
         self.wm_title("The Watcher")
         container = tk.Frame(self, height=400, width=600)
