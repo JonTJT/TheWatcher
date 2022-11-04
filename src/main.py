@@ -72,13 +72,13 @@ class FileLog(tk.Frame):
         self.fileTableFrame.bind("<Configure>", self.onFrameConfigure)
 
         # Headers
-        tk.Label(self.fileTableFrame, text="No.", anchor="w", background="#FAF9F6").grid(row=0, column=0)
-        tk.Label(self.fileTableFrame, text="File", anchor="w", background="#FAF9F6").grid(row=0, column=1)
-        tk.Label(self.fileTableFrame, text="Classification", anchor="w", background="#FAF9F6").grid(row=0, column=2)
-        tk.Label(self.fileTableFrame, text="Notes", anchor="w", background="#FAF9F6").grid(row=0, column=3)
-        tk.Label(self.fileTableFrame, text="Edit", anchor="w", background="#FAF9F6").grid(row=0, column=4)
-        tk.Label(self.fileTableFrame, text="View Changes", anchor="w", background="#FAF9F6").grid(row=0, column=5)
-        tk.Label(self.fileTableFrame, text="Screenshot", anchor="w", background="#FAF9F6").grid(row=0, column=6)
+        tk.Label(self.fileTableFrame, text="No.", anchor="w", background="#FAF9F6").grid(row=0, column=0, sticky="ew")
+        tk.Label(self.fileTableFrame, text="File", anchor="w", background="#FAF9F6").grid(row=0, column=1, sticky="ew")
+        tk.Label(self.fileTableFrame, text="Classification", anchor="w", background="#FAF9F6").grid(row=0, column=2, sticky="ew")
+        tk.Label(self.fileTableFrame, text="Notes", anchor="w", background="#FAF9F6").grid(row=0, column=3, sticky="ew")
+        tk.Label(self.fileTableFrame, text="Edit", anchor="w", background="#FAF9F6").grid(row=0, column=4, sticky="ew")
+        tk.Label(self.fileTableFrame, text="View Changes", anchor="w", background="#FAF9F6").grid(row=0, column=5, sticky="ew")
+        tk.Label(self.fileTableFrame, text="Screenshot", anchor="w", background="#FAF9F6").grid(row=0, column=6, sticky="ew")
 
         onInvestigationStartThread = threading.Thread(target=self.WaitForInvestigation, args=[controller], daemon=True)
         onInvestigationStartThread.start()
