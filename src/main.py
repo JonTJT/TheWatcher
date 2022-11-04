@@ -8,7 +8,6 @@ import threading
 from datetime import datetime
 import pyautogui
 import pytz
-from PIL import ImageTk, Image
 
 class MainMenu(tk.Frame):
     def __init__(self, parent, controller):
@@ -74,6 +73,7 @@ class FileLog(tk.Frame):
         tk.Label(self.fileTableFrame, text="Classification", anchor="w", background="#FAF9F6").grid(row=0, column=2)
         tk.Label(self.fileTableFrame, text="Notes", anchor="w", background="#FAF9F6").grid(row=0, column=3)
         tk.Label(self.fileTableFrame, text="Edit", anchor="w", background="#FAF9F6").grid(row=0, column=4)
+        tk.Label(self.fileTableFrame, text="Screenshot", anchor="w", background="#FAF9F6").grid(row=0, column=5)
 
         self.populateData(controller)
 
@@ -102,6 +102,7 @@ class FileLog(tk.Frame):
             tk.OptionMenu( self.fileTableFrame , selectSubmissibility , *options).grid(row=currentRowNo, column=2)
             tk.Label(self.fileTableFrame, textvariable=row[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
             tk.Button(self.fileTableFrame, text="Edit", command=lambda itemNo = currentRowNo:[self.addNotes(itemNo, controller)]).grid(row=currentRowNo, column=4, sticky="ew")
+            tk.Button(self.fileTableFrame, text="Take", command=lambda x=row[0]:[self.addScreenshot(x, controller)], background="#FAF9F6").grid(row=currentRowNo, column=5, sticky="ew")
 
             self.rowNo.set(currentRowNo+1)
 
@@ -130,6 +131,7 @@ class FileLog(tk.Frame):
         tk.OptionMenu( self.fileTableFrame , selectSubmissibility , *options).grid(row=currentRowNo, column=2)
         tk.Label(self.fileTableFrame, textvariable=data[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
         tk.Button(self.fileTableFrame, text="Edit", command=lambda itemNo = currentRowNo:[self.addNotes(itemNo, controller)]).grid(row=currentRowNo, column=4, sticky="ew")
+        tk.Button(self.fileTableFrame, text="Take", command=lambda x=data[0]:[self.addScreenshot(x, controller)], background="#FAF9F6").grid(row=currentRowNo, column=5, sticky="ew")
 
         self.rowNo.set(currentRowNo+1)
 
@@ -153,6 +155,25 @@ class FileLog(tk.Frame):
         #Create a Button Widget in the Toplevel Window
         button= tk.Button(popup, text="Done", command=lambda:self.editNotes(popup,noteEdit.get(),itemno, controller))
         button.pack(side = "bottom", pady=5)
+
+    def addScreenshot(self, rowNo, controller):
+        # Minimize window
+        controller.iconify()
+        time.sleep(0.5)
+
+        # Screenshot
+        screenshot = pyautogui.screenshot()
+        now = datetime.now()
+        sgTime = pytz.timezone("Asia/Singapore")
+        nowSgTime = sgTime.localize(now)
+        screenshotName = controller.screenshotFolder + "\\" + controller.fileData[rowNo-1][1] + "_" + str(nowSgTime.strftime("%Y-%m-%d_%H.%M.%S")) + ".png"
+        screenshot.save(screenshotName)
+        controller.fileData[rowNo-1][4].append(screenshotName)
+        print(controller.fileData[rowNo-1][4])
+
+        # Open window
+        time.sleep(0.5)
+        controller.deiconify()
 
     def onFrameConfigure(self, event):
         '''Reset the scroll region to encompass the inner frame'''
@@ -198,10 +219,6 @@ class EventLog(tk.Frame):
         tk.Label(self.eventsTableFrame, text="Time", anchor="w", background="#FAF9F6").grid(row=0, column=1)
         tk.Label(self.eventsTableFrame, text="File name and path", anchor="w", background="#FAF9F6").grid(row=0, column=2, ipadx=5)
         tk.Label(self.eventsTableFrame, text="Event", anchor="w", background="#FAF9F6").grid(row=0, column=3)
-        tk.Label(self.eventsTableFrame, text="Notes", anchor="w", background="#FAF9F6").grid(row=0, column=4)
-        tk.Label(self.eventsTableFrame, text="Edit", anchor="w", background="#FAF9F6").grid(row=0, column=5)
-        tk.Label(self.eventsTableFrame, text="Take screenshot", anchor="w", background="#FAF9F6").grid(row=0, column=6)
-        tk.Label(self.eventsTableFrame, text="View changes", anchor="w", background="#FAF9F6").grid(row=0, column=7)
 
         self.populateData(controller)
 
@@ -216,41 +233,16 @@ class EventLog(tk.Frame):
     def populateData(self, controller):
         self.eventsTableFrame.grid_columnconfigure(0, weight=1)
         # Populate table
-        for (eventNo, timestamp, filepath, event, notes, screenshotList) in controller.eventData:
+        for row in controller.eventData:
+            self.submissibility = StringVar()
             currentRowNo = self.eventRowNo.get()
-            tk.Label(self.eventsTableFrame, text=eventNo, anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
-            tk.Label(self.eventsTableFrame, text=timestamp, anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
-            tk.Label(self.eventsTableFrame, text=filepath, anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=2, sticky="ew")
-            tk.Label(self.eventsTableFrame, text=event, anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
-            tk.Label(self.eventsTableFrame, textvariable=notes, anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=4, sticky="ew")
-            tk.Button(self.eventsTableFrame, text="Edit", command=lambda itemNo=currentRowNo:[self.addNotes(itemNo, controller)], background="#FAF9F6").grid(row=currentRowNo, column=5, sticky="ew")
-            tk.Button(self.eventsTableFrame, text="Take", command=lambda x=eventNo:[self.addScreenshot(x, controller)], background="#FAF9F6").grid(row=currentRowNo, column=6, sticky="ew")
-            tk.Button(self.eventsTableFrame, text="View", command=lambda:[self.viewChanges(controller)], background="#FAF9F6").grid(row=currentRowNo, column=7, sticky="ew")
+            tk.Label(self.eventsTableFrame, text=row[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
+            tk.Label(self.eventsTableFrame, text=row[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
+            tk.Label(self.eventsTableFrame, text=row[2], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=2, sticky="ew")
+            tk.Label(self.eventsTableFrame, text=row[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
             self.eventRowNo.set(currentRowNo+1)
 
         currentRowNo = self.eventRowNo.get()
-    
-    # Edit the notes for the specific row
-    def editNotes(self, popup, text, itemno, controller):
-        controller.eventData[itemno-1][4].set(text)
-        popup.destroy()
-
-    # Open up popup window to prompt investigator to add notes
-    def addNotes(self, itemno, controller):
-        window = tk.Frame()
-        #Create a Toplevel window
-        popup= tk.Toplevel(window)
-        popup.geometry("750x250")
-
-        #Create an Entry Widget in the Toplevel window
-        noteEdit= tk.Entry(popup)
-        noteEdit.insert(0, controller.eventData[itemno-1][4].get())
-        noteEdit.place(width=400, height=150)
-
-        #Create a Button Widget in the Toplevel Window
-        button= tk.Button(popup, text="Done", command=lambda:self.editNotes(popup,noteEdit.get(),itemno, controller))
-        button.pack(side = "bottom", pady=5)
-
     # To add a new event item:
     def addNewEvent(self, data, controller):
         # Add timestamp and index to data
@@ -268,29 +260,6 @@ class EventLog(tk.Frame):
         tk.Label(self.eventsTableFrame, text=data[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
         
         self.eventRowNo.set(currentRowNo+1)
-
-     # Take snapshot, add the name of the snap to list
-    def addScreenshot(self, rowNo, controller):
-        # Minimize window
-        controller.iconify()
-        time.sleep(0.5)
-
-        # Screenshot
-        screenshot = pyautogui.screenshot()
-        now = datetime.now()
-        sgTime = pytz.timezone("Asia/Singapore")
-        nowSgTime = sgTime.localize(now)
-        screenshotName = controller.screenshotFolder + "\\" + controller.eventData[rowNo-1][2] + "_" + str(nowSgTime.strftime("%Y-%m-%d_%H.%M.%S")) + ".png"
-        screenshot.save(screenshotName)
-        controller.eventData[rowNo-1][5].append(screenshotName)
-        print(controller.eventData[rowNo-1][5])
-
-        # Open window
-        time.sleep(0.5)
-        controller.deiconify()
-
-    def viewChanges(self, controller):
-        print("I have no idea how to do this")
 
     def onFrameConfigure(self, event):
         '''Reset the scroll region to encompass the inner frame'''
@@ -321,21 +290,21 @@ class Controller(tk.Tk):
 
         # Data for filelog and event log (To remove data before deployment)
         self.fileData = [
-            [1, "testfile.mp4", "Submissible", tk.StringVar()],
-            [2, "testfile1.mp4", "Submissible", tk.StringVar()],
-            [3, "testfile2.mp4", "Non-Submissible", tk.StringVar()],
-            [4, "testfile3.mp4", "Submissible", tk.StringVar()],
-            [5, "testfile1.mp4", "Submissible", tk.StringVar()],
-            [6, "testfile2.mp4", "Non-Submissible", tk.StringVar()],
+            [1, "testfile.mp4", "Submissible", tk.StringVar(), []],
+            [2, "testfile1.mp4", "Submissible", tk.StringVar(), []],
+            [3, "testfile2.mp4", "Non-Submissible", tk.StringVar(), []],
+            [4, "testfile3.mp4", "Submissible", tk.StringVar(), []],
+            [5, "testfile1.mp4", "Submissible", tk.StringVar(), []],
+            [6, "testfile2.mp4", "Non-Submissible", tk.StringVar(), []],
         ]
 
         self.eventData = [
-            [1, "02/11/2022 19:21:05", "testfile.mp4", "File opened", tk.StringVar(), []],
-            [2, "02/11/2022 19:21:07", "testfile1.mp4", "File opened", tk.StringVar(), []],
-            [3, "02/11/2022 19:21:10", "testfile2.mp4", "File modified", tk.StringVar(), []],
-            [4, "02/11/2022 19:21:12", "testfile3.mp4", "File opened", tk.StringVar(), []],
-            [5, "02/11/2022 19:21:15", "testfile4.mp4", "File opened", tk.StringVar(), []],
-            [6, "02/11/2022 19:21:16", "testfile5.mp4", "File modified", tk.StringVar(), []],
+            [1, "02/11/2022 19:21:05", "testfile.mp4", "File opened", tk.StringVar()],
+            [2, "02/11/2022 19:21:07", "testfile1.mp4", "File opened", tk.StringVar()],
+            [3, "02/11/2022 19:21:10", "testfile2.mp4", "File modified", tk.StringVar()],
+            [4, "02/11/2022 19:21:12", "testfile3.mp4", "File opened", tk.StringVar()],
+            [5, "02/11/2022 19:21:15", "testfile1.mp4", "File opened", tk.StringVar()],
+            [6, "02/11/2022 19:21:16", "testfile2.mp4", "File modified", tk.StringVar()],
         ]
 
         # Create directory to save screenshots
