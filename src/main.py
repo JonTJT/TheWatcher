@@ -246,23 +246,7 @@ class EventLog(tk.Frame):
 
         currentRowNo = self.eventRowNo.get()
 
-    # To add a new event item:
-    def addNewEvent(self, data, controller):
-        # Add timestamp and index to data
-        now = datetime.now()
-        data.insert(0,now.strftime("%d/%m/%Y %H:%M:%S"))
-        currentRowNo = self.eventRowNo.get()
-        data.insert(0,currentRowNo)
-
-        # Add the new data to the database
-        controller.eventData.append(data)
-
-        tk.Label(self.eventsTableFrame, text=data[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
-        tk.Label(self.eventsTableFrame, text=data[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
-        tk.Label(self.eventsTableFrame, text=data[2], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=2, sticky="ew")
-        tk.Label(self.eventsTableFrame, text=data[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
-        
-        self.eventRowNo.set(currentRowNo+1)
+    
 
     def onFrameConfigure(self, event):
         '''Reset the scroll region to encompass the inner frame'''
@@ -366,7 +350,7 @@ class Controller(tk.Tk):
             self.timer.set('Time elapsed: {:02d}:{:02d}:{:02d}'.format((currenttime // 100) // 60 // 60, (currenttime // 100) // 60,(currenttime // 100) % 60))
             time.sleep(1)
 
-    # File counter function to count number of files within folder and all subfolders. # TODO: Depreciate after consulting the bossman
+    # File counter function to count number of files within folder and all subfolders. 
     def countFiles(self, filepath):
         counter = 0
         for file in glob.iglob(filepath+'/**/*.*',recursive = True):
@@ -385,11 +369,6 @@ class Controller(tk.Tk):
         # Start timer thread
         timerThread = threading.Thread(target=self.Timer, args=[starttime], daemon=True)
         timerThread.start()
-
-        # Populating fileData
-        print(self.selectedFolder.get())
-        self.folder_loader(self.selectedFolder.get())
-        print(self.fileData)
 
         # Set file count
         self.totalFileCount.set(self.countFiles(self.selectedFolder.get()))
@@ -426,25 +405,29 @@ class Controller(tk.Tk):
             newdata = [itemnumber, filename, tk.StringVar(), tk.StringVar(), meta.fileMeta(filename), []]
             self.fileData.append(newdata)
 
+    # To add a new event item:
+    def addNewEvent(self, data):
+        # Add timestamp and index to data
+        now = datetime.now()
+        data.insert(0,now.strftime("%d/%m/%Y %H:%M:%S"))
+        currentRowNo = self.eventRowNo.get()
+        data.insert(0,currentRowNo)
+
+        # Add the new data to the database
+        self.eventData.append(data)
+
+        tk.Label(self.eventsTableFrame, text=data[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
+        tk.Label(self.eventsTableFrame, text=data[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
+        tk.Label(self.eventsTableFrame, text=data[2], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=2, sticky="ew")
+        tk.Label(self.eventsTableFrame, text=data[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
+        
+        self.eventRowNo.set(currentRowNo+1)
+
     # End of investigation, direct user to report page
     def EndInvestigation(self):
         self.investigationActive.set(False)
         self.hashMultithreading()
         self.ShowFrame(Report)
-
-    # Enumerates all the files in the folder specified
-    def folder_loader(self, src_path):
-        no_of_files = 0
-        file_array = []
-        fileIndex = 1
-        for root, d, files in os.walk(src_path):
-            for file in files:
-                # file_array.append(os.path.join(root,file))
-                self.fileData.append([fileIndex, os.path.join(root,file), "Non-Submissible", tk.StringVar(), []])
-                fileIndex += 1
-                sys.stdout.write(f"\r{fileIndex - 1} files loaded.")
-        # print(file_array)
-        # return generate_hash(file_array)
 
     # Multithreaded hashing of all files marked submissible
     def hashMultithreading(self):
