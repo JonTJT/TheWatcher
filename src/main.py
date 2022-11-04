@@ -7,9 +7,15 @@ import threading
 from datetime import datetime
 import pyautogui
 import pytz
+import hashlib
+import multiprocessing
+import sys
 import shutil 
 import glob
 import meta
+import subprocess
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 class MainMenu(tk.Frame):
     def __init__(self, parent, controller):
@@ -40,6 +46,45 @@ class MainMenu(tk.Frame):
     def LoadingTracker(self, controller):
         while self.investigationActive.get() == False:
             i = 1
+
+class MonitorFolder(FileSystemEventHandler):
+    def __init__(self, hash_dict, controller):
+        self.hash_dict = hash_dict
+        print(self.hash_dict)
+        self.controller = controller
+
+    def hash_file(self,file):
+        result = subprocess.check_output(f'certutil -hashfile "{file}" MD5', shell=True)
+        hash = result.splitlines()[1]
+        return hash.decode('utf-8')
+
+    def on_file_open(self, file):
+        # Check if open or modified
+        filehash = self.hash_file(file)
+        if filehash == self.hash_dict[file]:
+            print("Open file")
+        else:
+            self.hash_dict[file] = filehash
+            print("Modified file")
+            print(file)
+            self.controller.addNewEvent([file,"File Modified"])
+
+
+    #TODO: EXCEPTION HANDLING
+    def on_created(self, event):
+        print(event.src_path, event.event_type)
+        self.controller.addNewEvent([event.src_path,"File Created"])
+
+    #TODO: EXCEPTION HANDLING
+    def on_modified(self, event):
+        if os.path.isfile(event.src_path):
+            self.on_file_open(event.src_path)
+        print(event.src_path, event.event_type)
+
+    #TODO: EXCEPTION HANDLING
+    def on_deleted(self, event):
+        print(event.src_path, event.event_type)
+        self.controller.addNewEvent([event.src_path,"File Deleted"])
 
 class FileLog(tk.Frame):
     def __init__(self, parent, controller):
@@ -107,6 +152,7 @@ class FileLog(tk.Frame):
 
         # Populate table
         for row in controller.fileData:
+            print("Filename", row[1])
             selectSubmissibility = StringVar()
             currentRowNo = self.rowNo.get()
 
@@ -131,7 +177,7 @@ class FileLog(tk.Frame):
                 item[2].set(submissibility)
         controller.FileInvestigated()
 
-    # Open up popup window to prompt investigator to add notes
+    # Open up popup window to prompt investigator to view metadata changes
     def viewChanges(self, itemno, controller):
         window = tk.Frame()
         #Create a Toplevel window
@@ -147,9 +193,6 @@ class FileLog(tk.Frame):
         tk.Label(popup,text= data[4]).pack(fill="both")
         tk.Label(popup,text= "Current Metadata:").pack(fill="x")
         tk.Label(popup,text= meta.fileMeta(data[1])).pack(fill="both")
-
-
-        # To display the changes stored in the filedata
 
     # Edit the notes for the specific row
     def editNotes(self, popup, text, itemno, controller):
@@ -233,7 +276,7 @@ class EventLog(tk.Frame):
         # Headers
         tk.Label(self.eventsTableFrame, text="No.", anchor="w", background="#FAF9F6").grid(row=0, column=0, sticky="ew")
         tk.Label(self.eventsTableFrame, text="Time", anchor="w", background="#FAF9F6").grid(row=0, column=1, sticky="ew")
-        tk.Label(self.eventsTableFrame, text="File name and path", anchor="w", background="#FAF9F6").grid(row=0, column=2, sticky="ew") #ipadx=5
+        tk.Label(self.eventsTableFrame, text="File name and path", anchor="w", background="#FAF9F6").grid(row=0, column=2, sticky="ew") 
         tk.Label(self.eventsTableFrame, text="Event", anchor="w", background="#FAF9F6").grid(row=0, column=3, sticky="ew")
 
         self.populateData(controller)
@@ -262,23 +305,7 @@ class EventLog(tk.Frame):
 
         currentRowNo = self.eventRowNo.get()
 
-    # To add a new event item:
-    def addNewEvent(self, data, controller):
-        # Add timestamp and index to data
-        now = datetime.now()
-        data.insert(0,now.strftime("%d/%m/%Y %H:%M:%S"))
-        currentRowNo = self.eventRowNo.get()
-        data.insert(0,currentRowNo)
-
-        # Add the new data to the database
-        controller.eventData.append(data)
-
-        tk.Label(self.eventsTableFrame, text=data[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
-        tk.Label(self.eventsTableFrame, text=data[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
-        tk.Label(self.eventsTableFrame, text=data[2], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=2, sticky="ew")
-        tk.Label(self.eventsTableFrame, text=data[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
-        
-        self.eventRowNo.set(currentRowNo+1)
+    
 
     def onFrameConfigure(self, event):
         '''Reset the scroll region to encompass the inner frame'''
@@ -328,6 +355,10 @@ class Controller(tk.Tk):
         self.startTime = tk.StringVar()
         self.timer = tk.StringVar()
         self.percentageCompletion = tk.IntVar()
+
+        self.hashDictMutex = multiprocessing.Lock()
+        self.startHashDict = {}
+        self.endHashDict = {}
 
         # Data for filelog and event log (To remove data before deployment)
         self.fileData = [
@@ -379,7 +410,7 @@ class Controller(tk.Tk):
             self.timer.set('Time elapsed: {:02d}:{:02d}:{:02d}'.format((currenttime // 100) // 60 // 60, (currenttime // 100) // 60,(currenttime // 100) % 60))
             time.sleep(1)
 
-    # File counter function to count number of files within folder and all subfolders.
+    # File counter function to count number of files within folder and all subfolders. 
     def countFiles(self, filepath):
         counter = 0
         for file in glob.iglob(filepath+'/**/*.*',recursive = True):
@@ -389,6 +420,7 @@ class Controller(tk.Tk):
 
     # To start investigation
     def BeginInvestigation(self):
+
         time.sleep(2)
         self.LoadingBar()
         now = datetime.now()
@@ -402,6 +434,22 @@ class Controller(tk.Tk):
         # Set file count
         self.totalFileCount.set(self.countFiles(self.selectedFolder.get()))
         self.investigatedFileCountString.set("Files investigated: "+ "0/" + str(self.totalFileCount.get()))
+
+        #Hash all the files before investigation
+        self.hashMultithreading(1)
+
+        event_handler = MonitorFolder(self.startHashDict, self)
+        observer = Observer()
+        observer.schedule(event_handler, path=self.selectedFolder.get(), recursive=True)
+        observer.start()
+        print("Monitoring started")
+        try:
+            while(True):
+                time.sleep(1)
+        except KeyboardInterrupt:
+            observer.stop()
+            observer.join()
+
         self.selectedFolder.set("Selected folder: "+ self.selectedFolder.get())
 
         self.investigationActive.set(True)
@@ -434,11 +482,63 @@ class Controller(tk.Tk):
             newdata = [itemnumber, filename, tk.StringVar(), tk.StringVar(), meta.fileMeta(filename), []]
             self.fileData.append(newdata)
 
+    # To add a new event item:
+    def addNewEvent(self, data):
+        # Add timestamp and index to data
+        now = datetime.now()
+        data.insert(0,now.strftime("%d/%m/%Y %H:%M:%S"))
+        currentRowNo = self.eventRowNo.get()
+        data.insert(0,currentRowNo)
+
+        # Add the new data to the database
+        self.eventData.append(data)
+
+        tk.Label(self.eventsTableFrame, text=data[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
+        tk.Label(self.eventsTableFrame, text=data[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
+        tk.Label(self.eventsTableFrame, text=data[2], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=2, sticky="ew")
+        tk.Label(self.eventsTableFrame, text=data[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
+        
+        self.eventRowNo.set(currentRowNo+1)
+
     # End of investigation, direct user to report page
     def EndInvestigation(self):
         self.investigationActive.set(False)
+        self.hashMultithreading(0)
         self.ShowFrame(Report)
 
+    # Multithreaded hashing of all files marked submissible
+    def hashMultithreading(self, isStart):
+        # print(multiprocessing.cpu_count())
+        pool = multiprocessing.Pool(4)
+        for row in self.fileData:
+            pool.apply_async(self.hashmd5(row[1], isStart))
+        
+        pool.close()
+        pool.join()
+
+        print("Hashdict:", self.endHashDict)
+
+    # Function to be threaded
+    def hashmd5(self, file, isStart):
+        with open(file,"rb") as f:
+            hash_md5 = hashlib.md5()
+            with open(file, "rb") as f:
+                for chunk in iter(lambda:f.read(4096), b""):
+                    hash_md5.update(chunk)
+            self.hashDictMutex.acquire()
+            if isStart:
+                self.startHashDict[file] = hash_md5.hexdigest()
+            else:
+                self.endHashDict[file] = hash_md5.hexdigest()
+            self.hashDictMutex.release()
+            # print(self.endHashDict[file]) # Debug
+            
+
+# To be called when a file has been successfully investigated.
+def FileInvestigated(controller):
+    fileCount = controller.investigatedFileCount.get()+1
+    controller.investigatedFileCount.set(fileCount)
+    controller.investigatedFileCountString.set("Total files investigated: " + str(fileCount) + '/' + str(controller.totalFileCount.get()))
     # Generate report of investigation
     def GenerateReport(self, folderpath):
         originalfolder = self.selectedFolder.get().replace("Selected folder: ", "")
@@ -479,7 +579,7 @@ class Controller(tk.Tk):
                         else:
                             # Insert empty cell
                             lines.insert(i+1, "<td></td>")
-                            i+=1                            
+                            i+=1
                         lines.insert(i+1, "</tr>")
                         i+=1
                         lines.insert(i+1, "</div>")
