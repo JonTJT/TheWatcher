@@ -476,6 +476,10 @@ class Controller(tk.Tk):
                             # Insert the slideshow button
                             lines.insert(i+1, "<td><input type=\"button\" onclick=\"createSlideShow('fileno"+str(data[0])+"', "+str(len(data[5]))+", "+ str(data[5])+")\"value=\"View Screenshots\"></input></td>")
                             i+=1
+                        else:
+                            # Insert empty cell
+                            lines.insert(i+1, "<td></td>")
+                            i+=1                            
                         lines.insert(i+1, "</tr>")
                         i+=1
                         lines.insert(i+1, "</div>")
