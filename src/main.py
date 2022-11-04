@@ -136,7 +136,18 @@ class FileLog(tk.Frame):
         window = tk.Frame()
         #Create a Toplevel window
         popup= tk.Toplevel(window)
-        popup.geometry("750x250")
+        popup.geometry("1000x600")
+        data = []
+        for item in controller.fileData:
+            if item[0] == itemno:
+                data = item
+                break
+        tk.Label(popup,text= "Metadata Comparison").pack(fill="both")
+        tk.Label(popup,text= "Original Metadata:").pack(fill="x")
+        tk.Label(popup,text= data[4]).pack(fill="both")
+        tk.Label(popup,text= "Current Metadata:").pack(fill="x")
+        tk.Label(popup,text= meta.fileMeta(data[1])).pack(fill="both")
+
 
         # To display the changes stored in the filedata
 
@@ -430,6 +441,10 @@ class Controller(tk.Tk):
 
     # Generate report of investigation
     def GenerateReport(self, folderpath):
+        originalfolder = self.selectedFolder.get().replace("Selected folder: ", "")
+        result = meta.allMeta(originalfolder)
+        print(result)
+        resultindex = 0
         with open('./Templates/template.html', 'r+') as f: 
             lines = f.readlines()
             for i, line in enumerate(lines):
@@ -441,9 +456,21 @@ class Controller(tk.Tk):
                         lines.insert(i+1, "<tr>")
                         i+=1
                         data[3] = data[3].get()
-                        for item in data:
-                            lines.insert(i+1, "<td>" + str(item) + "</td>")
-                            i+=1
+                        for x in range (0, 6):
+                            if x < 4:
+                                lines.insert(i+1, "<td>" + str(data[x]) + "</td>")
+                                i+=1
+                            elif x == 4:
+                                if (data[x] != None):
+                                    lines.insert(i+1, "<td> Original Metadata: " + str(data[x]) + "<br>Current Metadata: " + str(result[resultindex]) +"</td>")
+                                    resultindex += 1
+                                    i+=1
+                                else:
+                                    lines.insert(i+1, "<td> None </td>")
+                                    i+=1
+                            else:
+                                lines.insert(i+1, "<td>" + str(len(data[x])) + "</td>")
+                                i+=1
                         if (len(data[5]) > 0):
                             # Insert the slideshow button
                             lines.insert(i+1, "<td><input type=\"button\" onclick=\"createSlideShow('fileno"+str(data[0])+"', "+str(len(data[5]))+", "+ str(data[5])+")\"value=\"View Screenshots\"></input></td>")
@@ -486,7 +513,7 @@ class Controller(tk.Tk):
     def FileInvestigated(self):
         fileCount = self.investigatedFileCount.get()+1
         self.investigatedFileCount.set(fileCount)
-        self.investigatedFileCountString.set("Total files investigated: " + str(fileCount) + '/' + str(controller.totalFileCount.get()))
+        self.investigatedFileCountString.set("Total files investigated: " + str(fileCount) + '/' + str(self.totalFileCount.get()))
 
 if __name__ == "__main__":
     mainProgram = Controller()
