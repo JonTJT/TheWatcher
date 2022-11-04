@@ -93,6 +93,12 @@ class FileLog(tk.Frame):
     def populateData(self, controller):
 
         self.fileTableFrame.grid_columnconfigure(0, weight=1)
+        self.fileTableFrame.grid_columnconfigure(1, weight=3)
+        self.fileTableFrame.grid_columnconfigure(2, weight=1)
+        self.fileTableFrame.grid_columnconfigure(3, weight=1)
+        self.fileTableFrame.grid_columnconfigure(4, weight=1)
+        self.fileTableFrame.grid_columnconfigure(5, weight=1)
+        self.fileTableFrame.grid_columnconfigure(6, weight=1)
 
         options = [
             "Submissible",
@@ -109,7 +115,7 @@ class FileLog(tk.Frame):
             tk.Label(self.fileTableFrame, text=row[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
             selectSubmissibility.set("Click to select")
             submissibility = tk.OptionMenu( self.fileTableFrame, selectSubmissibility, command= lambda submissibility = selectSubmissibility , itemno = currentRowNo :[self.UpdateSubmissibility(itemno, controller, submissibility)], *options)
-            submissibility.grid(row=currentRowNo, column=2)
+            submissibility.grid(row=currentRowNo, column=2, sticky="ew")
             tk.Label(self.fileTableFrame, textvariable=row[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
             tk.Button(self.fileTableFrame, text="Edit", command=lambda itemNo = currentRowNo:[self.addNotes(itemNo, controller)]).grid(row=currentRowNo, column=4, sticky="ew")
             tk.Button(self.fileTableFrame, text="View", command=lambda itemNo = currentRowNo:[self.viewChanges(itemNo, controller)]).grid(row=currentRowNo, column=5, sticky="ew")
@@ -214,10 +220,10 @@ class EventLog(tk.Frame):
         self.eventsTableFrame.bind("<Configure>", self.onFrameConfigure)
 
         # Headers
-        tk.Label(self.eventsTableFrame, text="No.", anchor="w", background="#FAF9F6").grid(row=0, column=0)
-        tk.Label(self.eventsTableFrame, text="Time", anchor="w", background="#FAF9F6").grid(row=0, column=1)
-        tk.Label(self.eventsTableFrame, text="File name and path", anchor="w", background="#FAF9F6").grid(row=0, column=2, ipadx=5)
-        tk.Label(self.eventsTableFrame, text="Event", anchor="w", background="#FAF9F6").grid(row=0, column=3)
+        tk.Label(self.eventsTableFrame, text="No.", anchor="w", background="#FAF9F6").grid(row=0, column=0, sticky="ew")
+        tk.Label(self.eventsTableFrame, text="Time", anchor="w", background="#FAF9F6").grid(row=0, column=1, sticky="ew")
+        tk.Label(self.eventsTableFrame, text="File name and path", anchor="w", background="#FAF9F6").grid(row=0, column=2, sticky="ew") #ipadx=5
+        tk.Label(self.eventsTableFrame, text="Event", anchor="w", background="#FAF9F6").grid(row=0, column=3, sticky="ew")
 
         self.populateData(controller)
 
@@ -230,6 +236,9 @@ class EventLog(tk.Frame):
 
     def populateData(self, controller):
         self.eventsTableFrame.grid_columnconfigure(0, weight=1)
+        self.eventsTableFrame.grid_columnconfigure(1, weight=1)
+        self.eventsTableFrame.grid_columnconfigure(2, weight=3)
+        self.eventsTableFrame.grid_columnconfigure(3, weight=1)
         # Populate table
         for row in controller.eventData:
             self.submissibility = StringVar()
