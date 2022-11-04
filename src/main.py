@@ -18,7 +18,7 @@ class MainMenu(tk.Frame):
         tk.Frame.__init__(self, parent)
         tk.Label(self,text="Select the folder that will be used in the investigation.").pack(fill="both", expand=True)
         tk.Label(self,textvariable= controller.selectedFolder).pack(fill="both", expand=True)
-        tk.Button(self,text="Select Folder", command=lambda:[self.FolderSelect(controller)]).pack(fill="both", expand=True)
+        tk.Button(self,text="Select Investigation Folder", command=lambda:[self.FolderSelect(controller)]).pack(fill="both", expand=True)
         self.startButton = tk.Button(self,text="Begin Investigation", state="disabled", command=lambda:[controller.BeginInvestigation()])
         self.startButton.pack(fill="both", expand=True)
 
@@ -83,9 +83,6 @@ class FileLog(tk.Frame):
         onInvestigationStartThread = threading.Thread(target=self.WaitForInvestigation, args=[controller], daemon=True)
         onInvestigationStartThread.start()
 
-        # To remove: Test button to append new file entry
-        #tk.Button(self, text="Append", anchor="w", command=lambda:[self.addNewFile([0, "Insert full file path", tk.StringVar(), tk.StringVar()], controller)], background="#FAF9F6").pack(side="bottom")
-
     # Timer function for the investigation
     def WaitForInvestigation(self, controller):
         while controller.investigationActive.get() == False:
@@ -111,7 +108,8 @@ class FileLog(tk.Frame):
             fileNo.grid(row=currentRowNo, column=0, sticky="ew")
             tk.Label(self.fileTableFrame, text=row[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
             selectSubmissibility.set("Click to select")
-            tk.OptionMenu( self.fileTableFrame , selectSubmissibility , *options).grid(row=currentRowNo, column=2)
+            submissibility = tk.OptionMenu( self.fileTableFrame, selectSubmissibility, command= lambda submissibility = selectSubmissibility , itemno = currentRowNo :[self.UpdateSubmissibility(itemno, controller, submissibility)], *options)
+            submissibility.grid(row=currentRowNo, column=2)
             tk.Label(self.fileTableFrame, textvariable=row[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
             tk.Button(self.fileTableFrame, text="Edit", command=lambda itemNo = currentRowNo:[self.addNotes(itemNo, controller)]).grid(row=currentRowNo, column=4, sticky="ew")
             tk.Button(self.fileTableFrame, text="View", command=lambda itemNo = currentRowNo:[self.viewChanges(itemNo, controller)]).grid(row=currentRowNo, column=5, sticky="ew")
@@ -121,9 +119,11 @@ class FileLog(tk.Frame):
 
         currentRowNo = self.rowNo.get()
 
-
-    def UpdateSubmissibility(self, rowNo):
-        return None
+    def UpdateSubmissibility(self, rowNo, controller, submissibility):
+        for item in controller.fileData:
+            if item[0] == rowNo:
+                item[2] = submissibility
+        controller.FileInvestigated()
 
     # Open up popup window to prompt investigator to add notes
     def viewChanges(self, itemno, controller):
@@ -241,6 +241,7 @@ class EventLog(tk.Frame):
             self.eventRowNo.set(currentRowNo+1)
 
         currentRowNo = self.eventRowNo.get()
+
     # To add a new event item:
     def addNewEvent(self, data, controller):
         # Add timestamp and index to data
@@ -275,7 +276,7 @@ class Report(tk.Frame):
         self.reportFolderSelected.set(False)
 
         Title = tk.Label(self, text="Investigation Report").pack(fill="both", expand=True)
-        tk.Button(self,text="Select Folder", command=lambda:[self.ReportFolderSelect(controller)]).pack(fill="both", expand=True)
+        tk.Button(self,text="Select Report Folder", command=lambda:[self.ReportFolderSelect(controller)]).pack(fill="both", expand=True)
         self.generateReport = tk.Button(self,state="disabled",text="Generate HTML report", command=lambda:[controller.GenerateReport(controller.selectedReportFolder.get())])
         self.generateReport.pack(fill="both", expand=True)
 
@@ -408,10 +409,6 @@ class Controller(tk.Tk):
         if (len(self.fileData) == 0):
             newdata = [0, filename, tk.StringVar(), tk.StringVar(), meta.fileMeta(filename), []]
             self.fileData.append(newdata)
-        itemnumber = self.fileData[-1][0]
-        newdata = [itemnumber, filename, tk.StringVar(), tk.StringVar(), {}, []]
-        self.fileData.append(newdata)
-        print(self.fileData)
 
     # End of investigation, direct user to report page
     def EndInvestigation(self):
@@ -472,12 +469,11 @@ class Controller(tk.Tk):
             shutil.move("./"+self.screenshotFolder, folderpath)
             exit()
             
-
-# To be called when a file has been successfully investigated.
-def FileInvestigated(controller):
-    fileCount = controller.investigatedFileCount.get()+1
-    controller.investigatedFileCount.set(fileCount)
-    controller.investigatedFileCountString.set("Total files investigated: " + str(fileCount) + '/' + str(controller.totalFileCount.get()))
+    # To be called when a file has been successfully investigated.
+    def FileInvestigated(self):
+        fileCount = self.investigatedFileCount.get()+1
+        self.investigatedFileCount.set(fileCount)
+        self.investigatedFileCountString.set("Total files investigated: " + str(fileCount) + '/' + str(controller.totalFileCount.get()))
 
 if __name__ == "__main__":
     mainProgram = Controller()
