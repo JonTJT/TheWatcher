@@ -180,7 +180,7 @@ class FileLog(tk.Frame):
         nowSgTime = sgTime.localize(now)
         screenshotName = controller.screenshotFolder + "\\" + controller.fileData[rowNo-1][1] + "_" + str(nowSgTime.strftime("%Y-%m-%d_%H.%M.%S")) + ".png"
         screenshot.save(screenshotName)
-        controller.fileData[rowNo-1][4].append(screenshotName)
+        controller.fileData[rowNo-1][5].append(screenshotName)
 
         # Open window
         time.sleep(0.5)
