@@ -53,7 +53,7 @@
         }
 
         /* Position the "close button" to the right */
-                .close {
+        .close {
             right: 0;
             top: 0;
             border-radius: 3px 0 0 3px;
@@ -131,68 +131,29 @@
     <div style=" overflow-y:auto;">
         <table>
             <h1> The Watcher report </h1>
-            <h2>Time: 2103921093:210302183</h2>
+            <!-- Enter investigation start time here -->
             <h3> File Log </h3>
-                <tr>
-                    <th>No.</th>
-                    <th>File name and path</th>
-                    <th>Classification</th>
-                    <th>Notes</th>
-                    <th>Changes</th>
-                    <th>Screenshots</th>
-                </tr>
             <tr>
-                <td>Adam</td>
-                <td>Johnson</td>
-                <td>67</td>
-                <td>67</td>
-                <td>67</td>
-                <td>67</td>
+                <th>No.</th>
+                <th>File name and path</th>
+                <th>Classification</th>
+                <th>Notes</th>
+                <th>View Changes</th>
+                <th>Screenshots</th>
             </tr>
-        </table>
+            <!-- File data -->
     </div>
-
-    <h3> Event Log </h3>
 
     <div style=" overflow-y:auto;">
         <table>
-            <h1> The Watcher report </h1>
-            <h2>Time: 2103921093:210302183</h2>
-            <h3> File Log </h3>
-                <tr>
-                    <th>No.</th>
-                    <th>Time</th>
-                    <th>File name and path</th>
-                    <th>Event</th>
-                </tr>
+            <h3> Event Log </h3>
             <tr>
-            <!-- File data -->
-            <div id="itemno10">
-                <td>Jill</td>
-                <td>Smith</td>
-                <td>50</td>
-                <td>50</td>
-                <td>50</td>
-                <td><input type="button" onclick="createSlideShow('itemno10', 3, ['1.PNG', '2.PNG', '3.PNG'])"
-                        value="Basic Popup"></input></td>
-            </div>
+                <th>No.</th>
+                <th>Time</th>
+                <th>File name and path</th>
+                <th>Event</th>
             </tr>
-            <tr>
-                <td>Eve</td>
-                <td>Jackson</td>
-                <td>94</td>
-                <td>94</td>
-                <td>94</td>
-                <td>94</td>
-            </tr>
-            <tr>
-                <td>Adam</td>
-                <td>Johnson</td>
-                <td>67</td>
-                <td>67</td>
-                <td>67</td>
-                <td>67</td>
-            </tr>
+            <!-- Event data -->
         </table>
     </div>
 
@@ -226,7 +187,7 @@
 
         // When the user clicks on div, open the popup
         function createSlideShow(divid, noOfPictures, pictureList) {
-            if (document.getElementById("slideshow") != null){
+            if (document.getElementById("slideshow") != null) {
                 return
             }
 
@@ -271,7 +232,7 @@
                 mySlides.appendChild(previous)
                 var close = document.createElement("a");
                 close.setAttribute("class", "close")
-                close.setAttribute("onclick", "closeSlideshow('"+ divid +"')")
+                close.setAttribute("onclick", "closeSlideshow('" + divid + "')")
                 popup.appendChild(previous)
                 popup.appendChild(next)
                 popup.appendChild(close)

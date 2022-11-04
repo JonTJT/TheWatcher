@@ -7,8 +7,7 @@ import threading
 from datetime import datetime
 import pyautogui
 import pytz
-from PIL import ImageTk, Image
-import codecs
+import shutil 
 
 class MainMenu(tk.Frame):
     def __init__(self, parent, controller):
@@ -28,6 +27,8 @@ class MainMenu(tk.Frame):
         if os.path.isdir(folderName):
             self.folderSelected.set(True)
             controller.selectedFolder.set(folderName)
+        else:
+            self.folderSelected.set(False)
 
         # Set start button to be active
         if self.folderSelected.get():
@@ -74,6 +75,8 @@ class FileLog(tk.Frame):
         tk.Label(self.fileTableFrame, text="Classification", anchor="w", background="#FAF9F6").grid(row=0, column=2)
         tk.Label(self.fileTableFrame, text="Notes", anchor="w", background="#FAF9F6").grid(row=0, column=3)
         tk.Label(self.fileTableFrame, text="Edit", anchor="w", background="#FAF9F6").grid(row=0, column=4)
+        tk.Label(self.fileTableFrame, text="View Changes", anchor="w", background="#FAF9F6").grid(row=0, column=5)
+        tk.Label(self.fileTableFrame, text="Screenshot", anchor="w", background="#FAF9F6").grid(row=0, column=6)
 
         self.populateData(controller)
 
@@ -102,6 +105,8 @@ class FileLog(tk.Frame):
             tk.OptionMenu( self.fileTableFrame , selectSubmissibility , *options).grid(row=currentRowNo, column=2)
             tk.Label(self.fileTableFrame, textvariable=row[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
             tk.Button(self.fileTableFrame, text="Edit", command=lambda itemNo = currentRowNo:[self.addNotes(itemNo, controller)]).grid(row=currentRowNo, column=4, sticky="ew")
+            tk.Button(self.fileTableFrame, text="View Changes", command=lambda itemNo = currentRowNo:[self.viewChanges(itemNo, controller)]).grid(row=currentRowNo, column=5, sticky="ew")
+            tk.Button(self.fileTableFrame, text="Take", command=lambda x=row[0]:[self.addScreenshot(x, controller)], background="#FAF9F6").grid(row=currentRowNo, column=6, sticky="ew")
 
             self.rowNo.set(currentRowNo+1)
 
@@ -109,7 +114,6 @@ class FileLog(tk.Frame):
 
 
     def UpdateSubmissibility(self, rowNo):
-        print(rowNo)
         return None
 
     # To add a new file item:
@@ -130,8 +134,18 @@ class FileLog(tk.Frame):
         tk.OptionMenu( self.fileTableFrame , selectSubmissibility , *options).grid(row=currentRowNo, column=2)
         tk.Label(self.fileTableFrame, textvariable=data[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
         tk.Button(self.fileTableFrame, text="Edit", command=lambda itemNo = currentRowNo:[self.addNotes(itemNo, controller)]).grid(row=currentRowNo, column=4, sticky="ew")
+        tk.Button(self.fileTableFrame, text="Take", command=lambda x=data[0]:[self.addScreenshot(x, controller)], background="#FAF9F6").grid(row=currentRowNo, column=5, sticky="ew")
 
         self.rowNo.set(currentRowNo+1)
+
+    # Open up popup window to prompt investigator to add notes
+    def viewChanges(self, itemno, controller):
+        window = tk.Frame()
+        #Create a Toplevel window
+        popup= tk.Toplevel(window)
+        popup.geometry("750x250")
+
+        # To display the changes stored in the filedata
 
     # Edit the notes for the specific row
     def editNotes(self, popup, text, itemno, controller):
@@ -153,6 +167,24 @@ class FileLog(tk.Frame):
         #Create a Button Widget in the Toplevel Window
         button= tk.Button(popup, text="Done", command=lambda:self.editNotes(popup,noteEdit.get(),itemno, controller))
         button.pack(side = "bottom", pady=5)
+
+    def addScreenshot(self, rowNo, controller):
+        # Minimize window
+        controller.iconify()
+        time.sleep(0.5)
+
+        # Screenshot
+        screenshot = pyautogui.screenshot()
+        now = datetime.now()
+        sgTime = pytz.timezone("Asia/Singapore")
+        nowSgTime = sgTime.localize(now)
+        screenshotName = controller.screenshotFolder + "\\" + controller.fileData[rowNo-1][1] + "_" + str(nowSgTime.strftime("%Y-%m-%d_%H.%M.%S")) + ".png"
+        screenshot.save(screenshotName)
+        controller.fileData[rowNo-1][4].append(screenshotName)
+
+        # Open window
+        time.sleep(0.5)
+        controller.deiconify()
 
     def onFrameConfigure(self, event):
         '''Reset the scroll region to encompass the inner frame'''
@@ -198,10 +230,6 @@ class EventLog(tk.Frame):
         tk.Label(self.eventsTableFrame, text="Time", anchor="w", background="#FAF9F6").grid(row=0, column=1)
         tk.Label(self.eventsTableFrame, text="File name and path", anchor="w", background="#FAF9F6").grid(row=0, column=2, ipadx=5)
         tk.Label(self.eventsTableFrame, text="Event", anchor="w", background="#FAF9F6").grid(row=0, column=3)
-        tk.Label(self.eventsTableFrame, text="Notes", anchor="w", background="#FAF9F6").grid(row=0, column=4)
-        tk.Label(self.eventsTableFrame, text="Edit", anchor="w", background="#FAF9F6").grid(row=0, column=5)
-        tk.Label(self.eventsTableFrame, text="Take screenshot", anchor="w", background="#FAF9F6").grid(row=0, column=6)
-        tk.Label(self.eventsTableFrame, text="View changes", anchor="w", background="#FAF9F6").grid(row=0, column=7)
 
         self.populateData(controller)
 
@@ -210,47 +238,21 @@ class EventLog(tk.Frame):
 
 
     def UpdateSubmissibility(self, rowNo):
-        print(rowNo)
         return None
 
     def populateData(self, controller):
         self.eventsTableFrame.grid_columnconfigure(0, weight=1)
         # Populate table
-        for (eventNo, timestamp, filepath, event, notes, screenshotList) in controller.eventData:
+        for row in controller.eventData:
+            self.submissibility = StringVar()
             currentRowNo = self.eventRowNo.get()
-            tk.Label(self.eventsTableFrame, text=eventNo, anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
-            tk.Label(self.eventsTableFrame, text=timestamp, anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
-            tk.Label(self.eventsTableFrame, text=filepath, anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=2, sticky="ew")
-            tk.Label(self.eventsTableFrame, text=event, anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
-            tk.Label(self.eventsTableFrame, textvariable=notes, anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=4, sticky="ew")
-            tk.Button(self.eventsTableFrame, text="Edit", command=lambda itemNo=currentRowNo:[self.addNotes(itemNo, controller)], background="#FAF9F6").grid(row=currentRowNo, column=5, sticky="ew")
-            tk.Button(self.eventsTableFrame, text="Take", command=lambda x=eventNo:[self.addScreenshot(x, controller)], background="#FAF9F6").grid(row=currentRowNo, column=6, sticky="ew")
-            tk.Button(self.eventsTableFrame, text="View", command=lambda:[self.viewChanges(controller)], background="#FAF9F6").grid(row=currentRowNo, column=7, sticky="ew")
+            tk.Label(self.eventsTableFrame, text=row[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
+            tk.Label(self.eventsTableFrame, text=row[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
+            tk.Label(self.eventsTableFrame, text=row[2], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=2, sticky="ew")
+            tk.Label(self.eventsTableFrame, text=row[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
             self.eventRowNo.set(currentRowNo+1)
 
         currentRowNo = self.eventRowNo.get()
-    
-    # Edit the notes for the specific row
-    def editNotes(self, popup, text, itemno, controller):
-        controller.eventData[itemno-1][4].set(text)
-        popup.destroy()
-
-    # Open up popup window to prompt investigator to add notes
-    def addNotes(self, itemno, controller):
-        window = tk.Frame()
-        #Create a Toplevel window
-        popup= tk.Toplevel(window)
-        popup.geometry("750x250")
-
-        #Create an Entry Widget in the Toplevel window
-        noteEdit= tk.Entry(popup)
-        noteEdit.insert(0, controller.eventData[itemno-1][4].get())
-        noteEdit.place(width=400, height=150)
-
-        #Create a Button Widget in the Toplevel Window
-        button= tk.Button(popup, text="Done", command=lambda:self.editNotes(popup,noteEdit.get(),itemno, controller))
-        button.pack(side = "bottom", pady=5)
-
     # To add a new event item:
     def addNewEvent(self, data, controller):
         # Add timestamp and index to data
@@ -269,33 +271,10 @@ class EventLog(tk.Frame):
         
         self.eventRowNo.set(currentRowNo+1)
 
-     # Take snapshot, add the name of the snap to list
-    def addScreenshot(self, rowNo, controller):
-        # Minimize window
-        controller.iconify()
-        time.sleep(0.5)
-
-        # Screenshot
-        screenshot = pyautogui.screenshot()
-        now = datetime.now()
-        sgTime = pytz.timezone("Asia/Singapore")
-        nowSgTime = sgTime.localize(now)
-        screenshotName = controller.screenshotFolder + "\\" + controller.eventData[rowNo-1][2] + "_" + str(nowSgTime.strftime("%Y-%m-%d_%H.%M.%S")) + ".png"
-        screenshot.save(screenshotName)
-        controller.eventData[rowNo-1][5].append(screenshotName)
-        print(controller.eventData[rowNo-1][5])
-
-        # Open window
-        time.sleep(0.5)
-        controller.deiconify()
-
-    def viewChanges(self, controller):
-        print("I have no idea how to do this")
-
     def onFrameConfigure(self, event):
         '''Reset the scroll region to encompass the inner frame'''
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-
+    
     # Function to resize frame to fit the canvas
     def on_canvas_configure(self, event):
         self.canvas.itemconfig(self.frame_id, width=event.width)
@@ -304,22 +283,34 @@ class Report(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
-        self.reportFolder = tk.StringVar()
+        self.reportFolderSelected = tk.BooleanVar()
+        self.reportFolderSelected.set(False)
 
         Title = tk.Label(self, text="Investigation Report").pack(fill="both", expand=True)
-        tk.Button(self,text="Generate HTML report", command=lambda:[controller.GenerateReport(self.reportFolder.get())]).pack(fill="both", expand=True)
+        tk.Button(self,text="Select Folder", command=lambda:[self.ReportFolderSelect(controller)]).pack(fill="both", expand=True)
+        self.generateReport = tk.Button(self,state="disabled",text="Generate HTML report", command=lambda:[controller.GenerateReport(controller.selectedReportFolder.get())])
+        self.generateReport.pack(fill="both", expand=True)
 
     # Prompts user to select folder to store report and all related files
-    def FolderSelect(self):
+    def ReportFolderSelect(self, controller):
+        self.generateReport["state"] = "disabled"
         folderName = filedialog.askdirectory()
         if os.path.isdir(folderName):
-            self.reportFolder.set(folderName)
+            self.reportFolderSelected.set(True)
+            controller.selectedReportFolder.set(folderName)
+        else:
+            self.reportFolderSelected.set(False)
+
+        # Set start button to be active
+        if self.reportFolderSelected.get():
+            self.generateReport["state"] = "normal"
 
 class Controller(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
 
         self.selectedFolder = tk.StringVar()
+        self.selectedReportFolder = tk.StringVar()
         self.investigationActive = tk.BooleanVar()
         self.investigationActive.set(False)
         self.investigatedFileCount = tk.IntVar()
@@ -331,12 +322,12 @@ class Controller(tk.Tk):
 
         # Data for filelog and event log (To remove data before deployment)
         self.fileData = [
-            [1, "testfile.mp4", "Submissible", tk.StringVar(), []],
-            [2, "testfile1.mp4", "Submissible", tk.StringVar(), []],
-            [3, "testfile2.mp4", "Non-Submissible", tk.StringVar(), []],
-            [4, "testfile3.mp4", "Submissible", tk.StringVar(), []],
-            [5, "testfile1.mp4", "Submissible", tk.StringVar(), []],
-            [6, "testfile2.mp4", "Non-Submissible", tk.StringVar(), []],
+            [1, "testfile.mp4", "Submissible", tk.StringVar(), "File access time changed", ["1.PNG","2.PNG","3.PNG"]],
+            [2, "testfile1.mp4", "Submissible", tk.StringVar(), "File access time changed", ["1.PNG","2.PNG","3.PNG"]],
+            [3, "testfile2.mp4", "Non-Submissible", tk.StringVar(), "File access time changed", ["1.PNG","2.PNG","3.PNG"]],
+            [4, "testfile3.mp4", "Submissible", tk.StringVar(), "File access time changed", ["1.PNG","2.PNG","3.PNG"]],
+            [5, "testfile1.mp4", "Submissible", tk.StringVar(), "File access time changed", ["1.PNG","2.PNG","3.PNG"]],
+            [6, "testfile2.mp4", "Non-Submissible", tk.StringVar(), "File access time changed", ["1.PNG","2.PNG","3.PNG"]],
         ]
 
         self.eventData = [
@@ -344,8 +335,8 @@ class Controller(tk.Tk):
             [2, "02/11/2022 19:21:07", "testfile1.mp4", "File opened", tk.StringVar()],
             [3, "02/11/2022 19:21:10", "testfile2.mp4", "File modified", tk.StringVar()],
             [4, "02/11/2022 19:21:12", "testfile3.mp4", "File opened", tk.StringVar()],
-            [5, "02/11/2022 19:21:15", "testfile4.mp4", "File opened", tk.StringVar()],
-            [6, "02/11/2022 19:21:16", "testfile5.mp4", "File modified", tk.StringVar()],
+            [5, "02/11/2022 19:21:15", "testfile1.mp4", "File opened", tk.StringVar()],
+            [6, "02/11/2022 19:21:16", "testfile2.mp4", "File modified", tk.StringVar()],
         ]
 
         # Create directory to save screenshots
@@ -384,13 +375,11 @@ class Controller(tk.Tk):
             currenttime = int(round(time.time() * 100)) - starttime
             self.timer.set('Time elapsed: {:02d}:{:02d}:{:02d}'.format((currenttime // 100) // 60 // 60, (currenttime // 100) // 60,(currenttime // 100) % 60))
             time.sleep(1)
-        print("Timer exited")
 
     # File counter function to count number of files within folder and all subfolders.
     def countFiles(self, filepath):
         counter = sum([len(files) for r, d, files in os.walk(filepath)])
         self.totalFileCount.set(counter)
-        print(counter)
         return counter
 
     # To start investigation
@@ -398,7 +387,7 @@ class Controller(tk.Tk):
         time.sleep(2)
         self.LoadingBar()
         now = datetime.now()
-        self.startTime.set("Start time: " + now.strftime("%d/%m/%Y %H:%M:%S"))
+        self.startTime.set("Investigation start time: " + now.strftime("%d/%m/%Y %H:%M:%S"))
         starttime = int(round(time.time() * 100))
 
         # Start timer thread
@@ -421,7 +410,7 @@ class Controller(tk.Tk):
         loadingpopup.geometry("300x200")
         #Loading percentage for entire program
         tk.Label(loadingpopup,text= "Collecting hashes of all files...").pack(fill="both", expand=True)
-        tk.Label(loadingpopup,text= "Please wait").pack(fill="both", expand=True)
+        tk.Label(loadingpopup,text= "Please wait").pack(fill="both", expand=True) 
         loadingpopup.update()
         checkProgressThread = threading.Thread(target=self.checkLoadingProgress, args=[loadingpopup], daemon=True)
         checkProgressThread.start()
@@ -444,22 +433,48 @@ class Controller(tk.Tk):
                 if "<!-- File data -->" in line:
                     # Create a table row for each file log.
                     for data in self.fileData:
+                        lines.insert(i+1, "<div id = 'fileno"+str(data[0])+"'>")
+                        i+=1
                         lines.insert(i+1, "<tr>")
                         i+=1
                         data[3] = data[3].get()
                         for item in data:
                             lines.insert(i+1, "<td>" + str(item) + "</td>")
                             i+=1
-                        # Insert the slideshow button
-                        lines.insert(i+1, "<td><input type=\"button\" onclick=\"createSlideShow('itemno"+data[0]+"', "+len(data[2])+", "+data[4]+")\"value=\"Basic Popup\"></input></td>")
-                        i+=1
+                        if (len(data[5]) > 0):
+                            # Insert the slideshow button
+                            lines.insert(i+1, "<td><input type=\"button\" onclick=\"createSlideShow('fileno"+str(data[0])+"', "+str(len(data[5]))+", "+ str(data[5])+")\"value=\"View Screenshots\"></input></td>")
+                            i+=1
                         lines.insert(i+1, "</tr>")
                         i+=1
+                        lines.insert(i+1, "</div>")
+                        i+=1
+                if "<!-- Enter investigation start time here -->" in line:
+                    lines.insert(i+1, "<h2>" + self.startTime.get() + "</h2>")
+                    i+=1
+                if "<!-- Event data -->" in line:
+                    # Create a table row for each event log.
+                    for data in self.eventData:
+                        lines.insert(i+1, "<tr>")
+                        i+=1
+                        data[4] = data[4].get()
+                        for item in data:
+                            lines.insert(i+1, "<td>" + str(item) + "</td>")
+                            i+=1
+                        lines.insert(i+1, "</tr>")
+                        i+=1
+
             f.seek(0)
-            print(lines)
-            for line in lines:
-               print(1)
-               #f.write(line)
+            starttime = self.startTime.get().replace("Investigation start time: ","")
+            starttime = starttime.replace("/","_")
+            starttime = starttime.replace(":","_")
+            with open( (folderpath+"/WatcherReport"+starttime+".html"), 'w+') as newhtml:
+                for line in lines:
+                    newhtml.write(line)
+            # Move screenshot folder
+            shutil.move("./"+self.screenshotFolder, folderpath)
+            exit()
+            
 
 # To be called when a file has been successfully investigated.
 def FileInvestigated(controller):
