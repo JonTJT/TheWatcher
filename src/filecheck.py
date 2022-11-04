@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 import shutil
 import hashlib
@@ -12,26 +13,28 @@ class MonitorFolder(FileSystemEventHandler):
         print(self.hash_dict)
 
     FILE_SIZE=1000
-    def on_any_event(self, event):
-        print(event.src_path, event.event_type)
+    # def on_any_event(self, event):
+    #     print(event.src_path, event.event_type)
 
     def save_file(self, file):
         shutil.copy2(file, "savedStates/")
 
     def hash_file(self,file):
         print("hash_file: ", file)
-        with open(file,"rb") as f:
-            data = f.read()
-            print(hashlib.md5(data).hexdigest())
-            return hashlib.md5(data).hexdigest()
+        result = subprocess.check_output(f'certutil -hashfile "{file}" MD5', shell=True)
+        hash = result.splitlines()[1]
+        return hash.decode('utf-8')
 
     def on_file_open(self, file):
         print("On file open: ", file)
         # Check if open or modified
-        if self.hash_file(file) in self.hash_dict:
+        filehash = self.hash_file(file)
+        print("FILE HASH ASDASDAKSJSHDASJKLDH" , filehash)
+        print (f"COMPARISON {filehash} with {self.hash_dict[file]}. Types are {type(filehash)} and {type(self.hash_dict[file])}")
+        if filehash == self.hash_dict[file]:
             print("Open file")
-            self.save_file(file)
         else:
+            self.hash_dict[file] = filehash
             print("Modified file")
 
     def on_created(self, event):
@@ -41,10 +44,10 @@ class MonitorFolder(FileSystemEventHandler):
         if os.path.isfile(event.src_path):
             self.on_file_open(event.src_path)
         print(event.src_path, event.event_type)
-    
+
     def on_deleted(self, event):
         print(event.src_path, event.event_type)
-               
+
     # def checkFolderSize(self,src_path):
     #     if os.path.isdir(src_path):
     #         if os.path.getsize(src_path) >self.FILE_SIZE:
