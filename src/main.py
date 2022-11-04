@@ -13,6 +13,9 @@ import sys
 import shutil 
 import glob
 import meta
+import subprocess
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 class MainMenu(tk.Frame):
     def __init__(self, parent, controller):
@@ -43,6 +46,45 @@ class MainMenu(tk.Frame):
     def LoadingTracker(self, controller):
         while self.investigationActive.get() == False:
             i = 1
+
+class MonitorFolder(FileSystemEventHandler):
+    def __init__(self, hash_dict, controller):
+        self.hash_dict = hash_dict
+        print(self.hash_dict)
+        self.controller = controller
+
+    def hash_file(self,file):
+        result = subprocess.check_output(f'certutil -hashfile "{file}" MD5', shell=True)
+        hash = result.splitlines()[1]
+        return hash.decode('utf-8')
+
+    def on_file_open(self, file):
+        # Check if open or modified
+        filehash = self.hash_file(file)
+        if filehash == self.hash_dict[file]:
+            print("Open file")
+        else:
+            self.hash_dict[file] = filehash
+            print("Modified file")
+            print(file)
+            self.controller.addNewEvent([file,"File Modified"])
+
+
+    #TODO: EXCEPTION HANDLING
+    def on_created(self, event):
+        print(event.src_path, event.event_type)
+        self.controller.addNewEvent([event.src_path,"File Created"])
+
+    #TODO: EXCEPTION HANDLING
+    def on_modified(self, event):
+        if os.path.isfile(event.src_path):
+            self.on_file_open(event.src_path)
+        print(event.src_path, event.event_type)
+
+    #TODO: EXCEPTION HANDLING
+    def on_deleted(self, event):
+        print(event.src_path, event.event_type)
+        self.controller.addNewEvent([event.src_path,"File Deleted"])
 
 class FileLog(tk.Frame):
     def __init__(self, parent, controller):
@@ -298,7 +340,8 @@ class Controller(tk.Tk):
         self.percentageCompletion = tk.IntVar()
 
         self.hashDictMutex = multiprocessing.Lock()
-        self.hashDict = {}
+        self.startHashDict = {}
+        self.endHashDict = {}
 
         # Data for filelog and event log (To remove data before deployment)
         self.fileData = [
@@ -360,6 +403,7 @@ class Controller(tk.Tk):
 
     # To start investigation
     def BeginInvestigation(self):
+
         time.sleep(2)
         self.LoadingBar()
         now = datetime.now()
@@ -373,6 +417,22 @@ class Controller(tk.Tk):
         # Set file count
         self.totalFileCount.set(self.countFiles(self.selectedFolder.get()))
         self.investigatedFileCountString.set("Files investigated: "+ "0/" + str(self.totalFileCount.get()))
+
+        #Hash all the files before investigation
+        self.hashMultithreading(1)
+
+        event_handler = MonitorFolder(self.startHashDict, self)
+        observer = Observer()
+        observer.schedule(event_handler, path=self.selectedFolder.get(), recursive=True)
+        observer.start()
+        print("Monitoring started")
+        try:
+            while(True):
+                time.sleep(1)
+        except KeyboardInterrupt:
+            observer.stop()
+            observer.join()
+
         self.selectedFolder.set("Selected folder: "+ self.selectedFolder.get())
 
         self.investigationActive.set(True)
@@ -426,32 +486,35 @@ class Controller(tk.Tk):
     # End of investigation, direct user to report page
     def EndInvestigation(self):
         self.investigationActive.set(False)
-        self.hashMultithreading()
+        self.hashMultithreading(0)
         self.ShowFrame(Report)
 
     # Multithreaded hashing of all files marked submissible
-    def hashMultithreading(self):
+    def hashMultithreading(self, isStart):
         # print(multiprocessing.cpu_count())
         pool = multiprocessing.Pool(4)
-        for (rowNo, filepath, submissible, notes, screenshotList) in self.fileData:
-            pool.apply_async(self.hashmd5(filepath))
+        for row in self.fileData:
+            pool.apply_async(self.hashmd5(row[1], isStart))
         
         pool.close()
         pool.join()
 
-        print("Hashdict:", self.hashDict)
+        print("Hashdict:", self.endHashDict)
 
     # Function to be threaded
-    def hashmd5(self, file):
+    def hashmd5(self, file, isStart):
         with open(file,"rb") as f:
             hash_md5 = hashlib.md5()
             with open(file, "rb") as f:
                 for chunk in iter(lambda:f.read(4096), b""):
                     hash_md5.update(chunk)
             self.hashDictMutex.acquire()
-            self.hashDict[file] = hash_md5.hexdigest()
+            if isStart:
+                self.startHashDict[file] = hash_md5.hexdigest()
+            else:
+                self.endHashDict[file] = hash_md5.hexdigest()
             self.hashDictMutex.release()
-            print(self.hashDict[file]) # Debug
+            # print(self.endHashDict[file]) # Debug
             
 
 # To be called when a file has been successfully investigated.
