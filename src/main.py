@@ -452,6 +452,10 @@ class Controller(tk.Tk):
                 if "<!-- Enter investigation start time here -->" in line:
                     lines.insert(i+1, "<h2>" + self.startTime.get() + "</h2>")
                     i+=1
+                    lines.insert(i+1, "<h2>" + self.selectedFolder.get() + "</h2>")
+                    i+=1
+                    lines.insert(i+1, "<h2>" + "Investigation End Time: " + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "</h2>")
+                    i+=1
                 if "<!-- Event data -->" in line:
                     # Create a table row for each event log.
                     for data in self.eventData:
