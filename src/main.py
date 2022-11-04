@@ -128,7 +128,7 @@ class FileLog(tk.Frame):
     def UpdateSubmissibility(self, rowNo, controller, submissibility):
         for item in controller.fileData:
             if item[0] == rowNo:
-                item[2] = submissibility
+                item[2].set(submissibility)
         controller.FileInvestigated()
 
     # Open up popup window to prompt investigator to add notes
@@ -443,7 +443,6 @@ class Controller(tk.Tk):
     def GenerateReport(self, folderpath):
         originalfolder = self.selectedFolder.get().replace("Selected folder: ", "")
         result = meta.allMeta(originalfolder)
-        print(result)
         resultindex = 0
         with open('./Templates/template.html', 'r+') as f: 
             lines = f.readlines()
@@ -455,6 +454,7 @@ class Controller(tk.Tk):
                         i+=1
                         lines.insert(i+1, "<tr>")
                         i+=1
+                        data[2] = data[2].get()
                         data[3] = data[3].get()
                         for x in range (0, 6):
                             if x < 4:
@@ -469,6 +469,7 @@ class Controller(tk.Tk):
                                     lines.insert(i+1, "<td> None </td>")
                                     i+=1
                             else:
+                                print(data)
                                 lines.insert(i+1, "<td>" + str(len(data[x])) + "</td>")
                                 i+=1
                         if (len(data[5]) > 0):
@@ -517,5 +518,5 @@ class Controller(tk.Tk):
 
 if __name__ == "__main__":
     mainProgram = Controller()
-    mainProgram.geometry("800x400")
+    mainProgram.state('zoomed')
     mainProgram.mainloop()
