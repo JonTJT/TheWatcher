@@ -133,7 +133,6 @@
             <h1> The Watcher report </h1>
             <h2>Time: 2103921093:210302183</h2>
             <h3> File Log </h3>
-            <div id="itemno10">
                 <tr>
                     <th>No.</th>
                     <th>File name and path</th>
@@ -142,7 +141,6 @@
                     <th>Changes</th>
                     <th>Screenshots</th>
                 </tr>
-            </div>
             <tr>
                 <td>Adam</td>
                 <td>Johnson</td>
@@ -161,15 +159,15 @@
             <h1> The Watcher report </h1>
             <h2>Time: 2103921093:210302183</h2>
             <h3> File Log </h3>
-            <div id="itemno10">
                 <tr>
                     <th>No.</th>
                     <th>Time</th>
                     <th>File name and path</th>
                     <th>Event</th>
                 </tr>
-            </div>
             <tr>
+            <!-- File data -->
+            <div id="itemno10">
                 <td>Jill</td>
                 <td>Smith</td>
                 <td>50</td>
@@ -177,6 +175,7 @@
                 <td>50</td>
                 <td><input type="button" onclick="createSlideShow('itemno10', 3, ['1.PNG', '2.PNG', '3.PNG'])"
                         value="Basic Popup"></input></td>
+            </div>
             </tr>
             <tr>
                 <td>Eve</td>
@@ -227,6 +226,10 @@
 
         // When the user clicks on div, open the popup
         function createSlideShow(divid, noOfPictures, pictureList) {
+            if (document.getElementById("slideshow") != null){
+                return
+            }
+
             if (noOfPictures > 0) {
                 var itemdiv = document.getElementById(divid);
                 var slideshowdiv = document.createElement("div");

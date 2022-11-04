@@ -30,7 +30,8 @@
 
         /* Next & previous buttons */
         .prev,
-        .next {
+        .next,
+        .close {
             cursor: pointer;
             position: absolute;
             top: 50%;
@@ -48,6 +49,13 @@
         /* Position the "next button" to the right */
         .next {
             right: 0;
+            border-radius: 3px 0 0 3px;
+        }
+
+        /* Position the "close button" to the right */
+                .close {
+            right: 0;
+            top: 0;
             border-radius: 3px 0 0 3px;
         }
 
@@ -125,7 +133,6 @@
             <h1> The Watcher report </h1>
             <h2>Time: 2103921093:210302183</h2>
             <h3> File Log </h3>
-            <div id="itemno10">
                 <tr>
                     <th>No.</th>
                     <th>File name and path</th>
@@ -134,7 +141,6 @@
                     <th>Changes</th>
                     <th>Screenshots</th>
                 </tr>
-            </div>
             <tr>
                 <td>Adam</td>
                 <td>Johnson</td>
@@ -153,15 +159,15 @@
             <h1> The Watcher report </h1>
             <h2>Time: 2103921093:210302183</h2>
             <h3> File Log </h3>
-            <div id="itemno10">
                 <tr>
                     <th>No.</th>
                     <th>Time</th>
                     <th>File name and path</th>
                     <th>Event</th>
                 </tr>
-            </div>
             <tr>
+            <!-- File data -->
+            <div id="itemno10">
                 <td>Jill</td>
                 <td>Smith</td>
                 <td>50</td>
@@ -169,6 +175,7 @@
                 <td>50</td>
                 <td><input type="button" onclick="createSlideShow('itemno10', 3, ['1.PNG', '2.PNG', '3.PNG'])"
                         value="Basic Popup"></input></td>
+            </div>
             </tr>
             <tr>
                 <td>Eve</td>
@@ -219,6 +226,10 @@
 
         // When the user clicks on div, open the popup
         function createSlideShow(divid, noOfPictures, pictureList) {
+            if (document.getElementById("slideshow") != null){
+                return
+            }
+
             if (noOfPictures > 0) {
                 var itemdiv = document.getElementById(divid);
                 var slideshowdiv = document.createElement("div");
@@ -226,11 +237,12 @@
                 itemdiv.appendChild(slideshowdiv)
                 var popup = document.createElement("div");
                 popup.setAttribute("id", "popupBasic")
-                popup.setAttribute("style", "visibility:visible")
+                popup.setAttribute("style", "visibility:shown")
                 popup.setAttribute("class", "slideshow-container")
                 slideshowdiv.appendChild(popup)
 
-                for (i = 0; i < noOfPictures, i++;) {
+                for (let i = 0; i < noOfPictures; i++) {
+                    console.log("wtf")
                     var mySlides = document.createElement("div");
                     mySlides.setAttribute("class", "mySlides")
                     popup.appendChild(mySlides)
@@ -238,52 +250,54 @@
                     var numbertext = document.createElement("div");
                     numbertext.setAttribute("class", "numbertext")
                     var text = document.createTextNode(i + " / " + noOfPictures)
+                    numbertext.appendChild(text)
+
                     mySlides.appendChild(numbertext)
 
                     var image = document.createElement("img");
                     image.setAttribute("src", pictureList[i])
                     image.setAttribute("style", "width:100%")
                     mySlides.appendChild(image)
-
-                    // Buttons
-                    var previous = document.createElement("a");
-                    previous.setAttribute("class", "prev")
-                    previous.setAttribute("onclick", "plusSlides(-1)")
-                    mySlides.appendChild(previous)
-                    var next = document.createElement("a");
-                    next.setAttribute("class", "next")
-                    next.setAttribute("onclick", "plusSlides(-1)")
-                    mySlides.appendChild(previous)
-                    var close = document.createElement("a");
-                    close.setAttribute("class", "close")
-                    close.setAttribute("onclick", "closeSlideshow()")
-                    mySlides.appendChild(previous)
                 }
 
-                console.log("u reach here");
+                // Buttons
+                var previous = document.createElement("a");
+                previous.setAttribute("class", "prev")
+                previous.setAttribute("onclick", "plusSlides(-1)")
+                mySlides.appendChild(previous)
+                var next = document.createElement("a");
+                next.setAttribute("class", "next")
+                next.setAttribute("onclick", "plusSlides(-1)")
+                mySlides.appendChild(previous)
+                var close = document.createElement("a");
+                close.setAttribute("class", "close")
+                close.setAttribute("onclick", "closeSlideshow('"+ divid +"')")
+                popup.appendChild(previous)
+                popup.appendChild(next)
+                popup.appendChild(close)
+
                 // Menu
                 var menudiv = document.createElement("div");
                 menudiv.setAttribute("style", "text-align:center")
-                popup.appendChild(menudiv)
-                console.log("u reach here2");
+                slideshowdiv.appendChild(menudiv)
 
-                for (y = 1; y < noOfPictures + 1, y++;) {
+                for (y = 1; y < noOfPictures + 1; y++) {
                     var dot = document.createElement("span");
                     dot.setAttribute("class", "dot")
                     var onclickstring = "currentSlide(" + y.toString() + ")"
                     dot.setAttribute("onclick", onclickstring)
                     menudiv.appendChild(dot)
-                    if (y == noOfPictures) {
-                        break
-                    }
                 }
+                currentSlide(1)
             }
         }
 
-        function closeSlideshow() {
-            var popup = document.getElementById("popupBasic");
-            popup.style.visibility = "hidden";
-            console.log(popup.style.visibility);
+        function closeSlideshow(elementid) {
+            console.log(elementid)
+            const element = document.getElementById(elementid);
+            while (element.firstChild) {
+                element.removeChild(element.lastChild);
+            }
         }
 
     </script>

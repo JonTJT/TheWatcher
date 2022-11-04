@@ -331,21 +331,21 @@ class Controller(tk.Tk):
 
         # Data for filelog and event log (To remove data before deployment)
         self.fileData = [
-            [1, "testfile.mp4", "Submissible", tk.StringVar()],
-            [2, "testfile1.mp4", "Submissible", tk.StringVar()],
-            [3, "testfile2.mp4", "Non-Submissible", tk.StringVar()],
-            [4, "testfile3.mp4", "Submissible", tk.StringVar()],
-            [5, "testfile1.mp4", "Submissible", tk.StringVar()],
-            [6, "testfile2.mp4", "Non-Submissible", tk.StringVar()],
+            [1, "testfile.mp4", "Submissible", tk.StringVar(), []],
+            [2, "testfile1.mp4", "Submissible", tk.StringVar(), []],
+            [3, "testfile2.mp4", "Non-Submissible", tk.StringVar(), []],
+            [4, "testfile3.mp4", "Submissible", tk.StringVar(), []],
+            [5, "testfile1.mp4", "Submissible", tk.StringVar(), []],
+            [6, "testfile2.mp4", "Non-Submissible", tk.StringVar(), []],
         ]
 
         self.eventData = [
-            [1, "02/11/2022 19:21:05", "testfile.mp4", "File opened", tk.StringVar(), []],
-            [2, "02/11/2022 19:21:07", "testfile1.mp4", "File opened", tk.StringVar(), []],
-            [3, "02/11/2022 19:21:10", "testfile2.mp4", "File modified", tk.StringVar(), []],
-            [4, "02/11/2022 19:21:12", "testfile3.mp4", "File opened", tk.StringVar(), []],
-            [5, "02/11/2022 19:21:15", "testfile4.mp4", "File opened", tk.StringVar(), []],
-            [6, "02/11/2022 19:21:16", "testfile5.mp4", "File modified", tk.StringVar(), []],
+            [1, "02/11/2022 19:21:05", "testfile.mp4", "File opened", tk.StringVar()],
+            [2, "02/11/2022 19:21:07", "testfile1.mp4", "File opened", tk.StringVar()],
+            [3, "02/11/2022 19:21:10", "testfile2.mp4", "File modified", tk.StringVar()],
+            [4, "02/11/2022 19:21:12", "testfile3.mp4", "File opened", tk.StringVar()],
+            [5, "02/11/2022 19:21:15", "testfile4.mp4", "File opened", tk.StringVar()],
+            [6, "02/11/2022 19:21:16", "testfile5.mp4", "File modified", tk.StringVar()],
         ]
 
         # Create directory to save screenshots
@@ -440,13 +440,26 @@ class Controller(tk.Tk):
     def GenerateReport(self, folderpath):
         with open('./Templates/template.html', 'r+') as f: 
             lines = f.readlines()
-            for line in lines:
-               print(line)
-                #if line.startswith('February'):
-                   #lines[i] = lines[i].strip() + '2012\n'
+            for i, line in enumerate(lines):
+                if "<!-- File data -->" in line:
+                    # Create a table row for each file log.
+                    for data in self.fileData:
+                        lines.insert(i+1, "<tr>")
+                        i+=1
+                        data[3] = data[3].get()
+                        for item in data:
+                            lines.insert(i+1, "<td>" + str(item) + "</td>")
+                            i+=1
+                        # Insert the slideshow button
+                        lines.insert(i+1, "<td><input type=\"button\" onclick=\"createSlideShow('itemno"+data[0]+"', "+len(data[2])+", "+data[4]+")\"value=\"Basic Popup\"></input></td>")
+                        i+=1
+                        lines.insert(i+1, "</tr>")
+                        i+=1
             f.seek(0)
+            print(lines)
             for line in lines:
-               f.write(line)
+               print(1)
+               #f.write(line)
 
 # To be called when a file has been successfully investigated.
 def FileInvestigated(controller):
