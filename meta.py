@@ -5,11 +5,11 @@ import zipfile
 import xml.dom.minidom
 from datetime import datetime
 
-# pip install python-dateutil
-import dateutil.parser 
+
+import dateutil.parser # pip install python-dateutil
 from dateutil import tz
-#pip install oletools
-import olefile
+import olefile #pip install oletools
+import csv
 
 '''
 Usage:
@@ -25,7 +25,8 @@ fileMeta(filePath) =
     return None     - for extensions that isnt under MS Office
 
 Description:
-    Most file meta data has to be manually typed, this python module automates it.
+    Office product has a different meta data stored in the files that may differ from the system stored meta data of the file
+    Most of these meta data are manually typed, thus this python module helps to automates it.
     Data is retrieved from properties -> details tab
 
     # __Origin Meta Data__
@@ -51,6 +52,7 @@ def allMeta(imgPath):
         if result != None:
             filesMeta.append(result)
 
+    savetoCSV(filesMeta)
     return filesMeta
 
 def fileMeta(filePath):
@@ -136,8 +138,34 @@ def oldMeta(filePath):
     
     return info
 
+def savetoCSV(info): 
+
+    # specifying the fields for csv file 
+    fields = ['filePath', 'creator', 'lastModifiedBy', 'creationDate', 'dateModified', 'title', 'description'] 
+  
+    i = 1
+    filename = "./result_" + str(i) + ".csv"
+    while True:
+        if os.path.exists(filename):
+            i += 1
+            filename = "./result_" + str(i) + ".csv"
+        else:
+            # writing to csv file 
+            with open(filename, 'w') as csvfile: 
+        
+                # creating a csv dict writer object 
+                writer = csv.DictWriter(csvfile, fieldnames = fields) 
+        
+                # writing headers (field names) 
+                writer.writeheader() 
+        
+                # writing data rows 
+                writer.writerows(info)
+
+                return
+
 if __name__ == "__main__":
-    result1 = allMeta("./")
+    result1 = allMeta("./sample mount img")
     print(result1)
     result2 = fileMeta("sample mount img/folder 1/test.docx")
     print(result2)
