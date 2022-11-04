@@ -8,6 +8,8 @@ from datetime import datetime
 import pyautogui
 import pytz
 import shutil 
+import glob
+import meta
 
 class MainMenu(tk.Frame):
     def __init__(self, parent, controller):
@@ -37,7 +39,7 @@ class MainMenu(tk.Frame):
     # Check status of completion for loading
     def LoadingTracker(self, controller):
         while self.investigationActive.get() == False:
-            pass
+            i = 1
 
 class FileLog(tk.Frame):
     def __init__(self, parent, controller):
@@ -78,10 +80,17 @@ class FileLog(tk.Frame):
         tk.Label(self.fileTableFrame, text="View Changes", anchor="w", background="#FAF9F6").grid(row=0, column=5)
         tk.Label(self.fileTableFrame, text="Screenshot", anchor="w", background="#FAF9F6").grid(row=0, column=6)
 
-        self.populateData(controller)
+        onInvestigationStartThread = threading.Thread(target=self.WaitForInvestigation, args=[controller], daemon=True)
+        onInvestigationStartThread.start()
 
         # To remove: Test button to append new file entry
-        #tk.Button(self, text="Append", anchor="w", command=lambda:[self.addNewFile([0, 1, 2, tk.StringVar()], controller)], background="#FAF9F6").pack(side="bottom")
+        #tk.Button(self, text="Append", anchor="w", command=lambda:[self.addNewFile([0, "Insert full file path", tk.StringVar(), tk.StringVar()], controller)], background="#FAF9F6").pack(side="bottom")
+
+    # Timer function for the investigation
+    def WaitForInvestigation(self, controller):
+        while controller.investigationActive.get() == False:
+            time.sleep(0.1)
+        self.populateData(controller)
 
     # Populate table with take data, to remove before deployment
     def populateData(self, controller):
@@ -105,7 +114,7 @@ class FileLog(tk.Frame):
             tk.OptionMenu( self.fileTableFrame , selectSubmissibility , *options).grid(row=currentRowNo, column=2)
             tk.Label(self.fileTableFrame, textvariable=row[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
             tk.Button(self.fileTableFrame, text="Edit", command=lambda itemNo = currentRowNo:[self.addNotes(itemNo, controller)]).grid(row=currentRowNo, column=4, sticky="ew")
-            tk.Button(self.fileTableFrame, text="View Changes", command=lambda itemNo = currentRowNo:[self.viewChanges(itemNo, controller)]).grid(row=currentRowNo, column=5, sticky="ew")
+            tk.Button(self.fileTableFrame, text="View", command=lambda itemNo = currentRowNo:[self.viewChanges(itemNo, controller)]).grid(row=currentRowNo, column=5, sticky="ew")
             tk.Button(self.fileTableFrame, text="Take", command=lambda x=row[0]:[self.addScreenshot(x, controller)], background="#FAF9F6").grid(row=currentRowNo, column=6, sticky="ew")
 
             self.rowNo.set(currentRowNo+1)
@@ -115,28 +124,6 @@ class FileLog(tk.Frame):
 
     def UpdateSubmissibility(self, rowNo):
         return None
-
-    # To add a new file item:
-    def addNewFile(self, data, controller):
-        controller.fileData.append(data)
-        currentRowNo = self.rowNo.get()
-        selectSubmissibility = StringVar()
-
-        options = [
-            "Submissible",
-            "Non-Submissible"
-        ]
-
-        fileNo = tk.Label(self.fileTableFrame, text=data[0], anchor="w", background="#FAF9F6")
-        fileNo.grid(row=currentRowNo, column=0, sticky="ew")
-        tk.Label(self.fileTableFrame, text=data[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
-        selectSubmissibility.set("Click to select")
-        tk.OptionMenu( self.fileTableFrame , selectSubmissibility , *options).grid(row=currentRowNo, column=2)
-        tk.Label(self.fileTableFrame, textvariable=data[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
-        tk.Button(self.fileTableFrame, text="Edit", command=lambda itemNo = currentRowNo:[self.addNotes(itemNo, controller)]).grid(row=currentRowNo, column=4, sticky="ew")
-        tk.Button(self.fileTableFrame, text="Take", command=lambda x=data[0]:[self.addScreenshot(x, controller)], background="#FAF9F6").grid(row=currentRowNo, column=5, sticky="ew")
-
-        self.rowNo.set(currentRowNo+1)
 
     # Open up popup window to prompt investigator to add notes
     def viewChanges(self, itemno, controller):
@@ -322,12 +309,6 @@ class Controller(tk.Tk):
 
         # Data for filelog and event log (To remove data before deployment)
         self.fileData = [
-            [1, "testfile.mp4", "Submissible", tk.StringVar(), "File access time changed", ["1.PNG","2.PNG","3.PNG"]],
-            [2, "testfile1.mp4", "Submissible", tk.StringVar(), "File access time changed", ["1.PNG","2.PNG","3.PNG"]],
-            [3, "testfile2.mp4", "Non-Submissible", tk.StringVar(), "File access time changed", ["1.PNG","2.PNG","3.PNG"]],
-            [4, "testfile3.mp4", "Submissible", tk.StringVar(), "File access time changed", ["1.PNG","2.PNG","3.PNG"]],
-            [5, "testfile1.mp4", "Submissible", tk.StringVar(), "File access time changed", ["1.PNG","2.PNG","3.PNG"]],
-            [6, "testfile2.mp4", "Non-Submissible", tk.StringVar(), "File access time changed", ["1.PNG","2.PNG","3.PNG"]],
         ]
 
         self.eventData = [
@@ -378,8 +359,10 @@ class Controller(tk.Tk):
 
     # File counter function to count number of files within folder and all subfolders.
     def countFiles(self, filepath):
-        counter = sum([len(files) for r, d, files in os.walk(filepath)])
-        self.totalFileCount.set(counter)
+        counter = 0
+        for file in glob.iglob(filepath+'/**/*.*',recursive = True):
+            counter += 1
+            self.addNewFile(file)
         return counter
 
     # To start investigation
@@ -395,9 +378,7 @@ class Controller(tk.Tk):
         timerThread.start()
 
         # Set file count
-        #countFilesThread = threading.Thread(target=self.countFiles, args=[self.selectedFolder.get()], daemon=True)
-        #countFilesThread.start()
-        self.countFiles(self.selectedFolder.get())
+        self.totalFileCount.set(self.countFiles(self.selectedFolder.get()))
         self.investigatedFileCountString.set("Files investigated: "+ "0/" + str(self.totalFileCount.get()))
         self.selectedFolder.set("Selected folder: "+ self.selectedFolder.get())
 
@@ -419,6 +400,17 @@ class Controller(tk.Tk):
         while (self.investigationActive.get() == False):
             loadingpopup.update()
         loadingpopup.destroy()
+
+    # To add a new file item:
+    def addNewFile(self, filename):
+        # Order of data: [(0)Index, (1)Full file name, (2)Submissibility, (3)Notes, (4)Metadata, (5)Screenshots]
+        if (len(self.fileData) == 0):
+            newdata = [0, filename, tk.StringVar(), tk.StringVar(), {}, []]
+            self.fileData.append(newdata)
+        itemnumber = self.fileData[-1][0]
+        newdata = [itemnumber, filename, tk.StringVar(), tk.StringVar(), {}, []]
+        self.fileData.append(newdata)
+        print(self.fileData)
 
     # End of investigation, direct user to report page
     def EndInvestigation(self):
