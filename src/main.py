@@ -190,9 +190,9 @@ class FileLog(tk.Frame):
                 break
         tk.Label(popup,text= "Metadata Comparison").pack(fill="both")
         tk.Label(popup,text= "Original Metadata:").pack(fill="x")
-        tk.Label(popup,text= data[4]).pack(fill="both")
+        tk.Label(popup,text= data[4], wraplength=600).pack(fill="both")
         tk.Label(popup,text= "Current Metadata:").pack(fill="x")
-        tk.Label(popup,text= meta.fileMeta(data[1])).pack(fill="both")
+        tk.Label(popup,text= meta.fileMeta(data[1]), wraplength=600).pack(fill="both")
 
     # Edit the notes for the specific row
     def editNotes(self, popup, text, itemno, controller):
@@ -556,8 +556,6 @@ class Controller(tk.Tk):
     # Generate report of investigation
     def GenerateReport(self, folderpath):
         originalfolder = self.selectedFolder.get().replace("Selected folder: ", "")
-        result = meta.allMeta(originalfolder)
-        resultindex = 0
         with open('./Templates/template.html', 'r+') as f: 
             lines = f.readlines()
             for i, line in enumerate(lines):
@@ -576,8 +574,7 @@ class Controller(tk.Tk):
                                 i+=1
                             elif x == 4:
                                 if (data[x] != None):
-                                    lines.insert(i+1, "<td> Original Metadata: " + str(data[x]) + "<br>Current Metadata: " + str(result[resultindex]) +"</td>")
-                                    resultindex += 1
+                                    lines.insert(i+1, "<td> Original Metadata: " + str(data[x]) + "<br>Current Metadata: " + str(meta.fileMeta(data[1])) +"</td>")
                                     i+=1
                                 else:
                                     lines.insert(i+1, "<td> None </td>")
@@ -609,7 +606,6 @@ class Controller(tk.Tk):
                     for data in self.eventData:
                         lines.insert(i+1, "<tr>")
                         i+=1
-                        data[4] = data[4].get()
                         for item in data:
                             lines.insert(i+1, "<td>" + str(item) + "</td>")
                             i+=1

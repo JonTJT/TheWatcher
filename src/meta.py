@@ -62,7 +62,10 @@ def fileMeta(filePath):
     data = {}
 
     # FS Meta Data
-    fsMeta = os.stat(filePath)
+    try:
+        fsMeta = os.stat(filePath)
+    except:
+        return {"Error": "Unable to read metadata."}
     try:
         data['fsSize'] = str(fsMeta.st_size) + " bytes"
     except:
