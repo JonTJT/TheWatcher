@@ -350,6 +350,7 @@ class Controller(tk.Tk):
         self.startTime = tk.StringVar()
         self.timer = tk.StringVar()
         self.percentageCompletion = tk.IntVar()
+        self.unreadableFileList = []
 
         self.hashDictMutex = multiprocessing.Lock()
         self.startHashDict = {}
@@ -412,6 +413,17 @@ class Controller(tk.Tk):
             self.addNewFile(file)
         return counter
 
+    def LoadingBar(self):
+        #Create a Toplevel window
+        loadingpopup= tk.Toplevel()
+        loadingpopup.geometry("300x200")
+        #Loading percentage for entire program
+        tk.Label(loadingpopup,text= "Collecting hashes of all files...").pack(fill="both", expand=True)
+        tk.Label(loadingpopup,text= "Please wait").pack(fill="both", expand=True) 
+        loadingpopup.update()
+        checkProgressThread = threading.Thread(target=self.checkLoadingProgress, args=[loadingpopup], daemon=True)
+        checkProgressThread.start()
+
     # To start investigation
     def BeginInvestigation(self):
 
@@ -427,6 +439,9 @@ class Controller(tk.Tk):
 
         #Hash all the files before investigation
         self.hashMultithreading(1)
+        
+        if len(self.unreadableFileList) > 0:
+            self.viewUnreadableFiles()
 
         event_handler = MonitorFolder(self.startHashDict, self.eventLog)
         observer = Observer()
@@ -443,16 +458,22 @@ class Controller(tk.Tk):
         self.investigationActive.set(True)
         self.ShowFrame(EventLog)
         
-    def LoadingBar(self):
+    def viewUnreadableFiles(self):
+        window = tk.Frame()
         #Create a Toplevel window
-        loadingpopup= tk.Toplevel()
-        loadingpopup.geometry("300x200")
-        #Loading percentage for entire program
-        tk.Label(loadingpopup,text= "Collecting hashes of all files...").pack(fill="both", expand=True)
-        tk.Label(loadingpopup,text= "Please wait").pack(fill="both", expand=True) 
-        loadingpopup.update()
-        checkProgressThread = threading.Thread(target=self.checkLoadingProgress, args=[loadingpopup], daemon=True)
-        checkProgressThread.start()
+        popup= tk.Toplevel(window)
+        popup.geometry("1000x600")
+        tk.Label(popup,text= "Unable to get hash for the following files:").grid(row=0, sticky="ew")
+        tk.Label(popup,text= "File:").grid(row=1, column=0, sticky="ew")
+        tk.Label(popup,text= "Error:").grid(row=1, column=1, sticky="ew")
+        popup.grid_columnconfigure(0, weight=1)
+        popup.grid_columnconfigure(1, weight=1)
+
+        totalno = len(self.unreadableFileList)
+        for i in range(totalno):
+            for j in range(2):
+                e = tk.Label(popup, wraplength=400, text=self.unreadableFileList[i][j])
+                e.grid(row=i+2, column=j, sticky="ew")
 
     def checkLoadingProgress(self, loadingpopup):
         while (self.investigationActive.get() == False):
@@ -462,12 +483,13 @@ class Controller(tk.Tk):
     # To add a new file item:
     def addNewFile(self, filename):
         # Order of data: [(0)Index, (1)Full file name, (2)Submissibility, (3)Notes, (4)Metadata, (5)Screenshots]
+        orgMetadata = meta.fileMeta(filename)
         if (len(self.fileData) == 0):
-            newdata = [1, filename, tk.StringVar(), tk.StringVar(), meta.fileMeta(filename), []]
+            newdata = [1, filename, tk.StringVar(), tk.StringVar(), orgMetadata, []]
             self.fileData.append(newdata)
         else:
             itemnumber = self.fileData[-1][0]+1
-            newdata = [itemnumber, filename, tk.StringVar(), tk.StringVar(), meta.fileMeta(filename), []]
+            newdata = [itemnumber, filename, tk.StringVar(), tk.StringVar(), orgMetadata, []]
             self.fileData.append(newdata)
 
     # To add a new event item:
@@ -505,18 +527,21 @@ class Controller(tk.Tk):
 
     # Function to be threaded
     def hashmd5(self, file, isStart):
-        with open(file,"rb") as f:
-            hash_md5 = hashlib.md5()
-            with open(file, "rb") as f:
-                for chunk in iter(lambda:f.read(4096), b""):
-                    hash_md5.update(chunk)
-            self.hashDictMutex.acquire()
-            if isStart:
-                self.startHashDict[file] = hash_md5.hexdigest()
-            else:
-                self.endHashDict[file] = hash_md5.hexdigest()
-            self.hashDictMutex.release()
-            
+        try:
+            with open(file,"rb") as f:
+                hash_md5 = hashlib.md5()
+                with open(file, "rb") as f:
+                    for chunk in iter(lambda:f.read(4096), b""):
+                        hash_md5.update(chunk)
+                self.hashDictMutex.acquire()
+                if isStart:
+                    self.startHashDict[file] = hash_md5.hexdigest()
+                else:
+                    self.endHashDict[file] = hash_md5.hexdigest()
+                self.hashDictMutex.release()
+        except Exception as e:
+            self.unreadableFileList.append([file,e])
+
     # To be called when a file has been successfully investigated.
     def FileInvestigated(controller):
         fileCount = controller.investigatedFileCount.get()+1
