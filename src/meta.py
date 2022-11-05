@@ -29,6 +29,7 @@ Description:
     Data is retrieved from properties -> details tab
 
     # FS Meta Data (copying the folder will update the File data and selecting that directory will yield dates that are recent)
+    
     # 1. Size (fsSize)
     # 2. Create Date (fsCreated)
     # 3. Last Modified Date (fsModified)
@@ -62,12 +63,25 @@ def fileMeta(filePath):
 
     # FS Meta Data
     fsMeta = os.stat(filePath)
-    data['fsSize'] = str(fsMeta.st_size) + "bytes"
-    data['fsCreated'] = datetime.fromtimestamp(fsMeta.st_ctime, tz=tz.gettz("Asia/Singapore")).strftime("%d-%m-%Y %H:%M:%S")
-    data['fsModified'] = datetime.fromtimestamp(fsMeta.st_mtime, tz=tz.gettz("Asia/Singapore")).strftime("%d-%m-%Y %H:%M:%S")
-    data['fsAccess'] = datetime.fromtimestamp(fsMeta.st_atime, tz=tz.gettz("Asia/Singapore")).strftime("%d-%m-%Y %H:%M:%S")
+    try:
+        data['fsSize'] = str(fsMeta.st_size) + " bytes"
+    except:
+        data['fsSize'] = "Error extracting file size"
+    try:
+        data['fsCreated'] = datetime.fromtimestamp(fsMeta.st_ctime, tz=tz.gettz("Asia/Singapore")).strftime("%d-%m-%Y %H:%M:%S")
+    except:
+        data['fsCreated'] = "Error extracting File System creation date"
+    try:
+        data['fsModified'] = datetime.fromtimestamp(fsMeta.st_mtime, tz=tz.gettz("Asia/Singapore")).strftime("%d-%m-%Y %H:%M:%S")
+    except:
+        data['fsModified'] = "Error extracting File System last modification date"
+    try:
+        data['fsAccess'] = datetime.fromtimestamp(fsMeta.st_atime, tz=tz.gettz("Asia/Singapore")).strftime("%d-%m-%Y %H:%M:%S")
+    except:
+        data['fsAccess'] = "Error extracting File System last access date"
+    
     data['filePath'] = filePath
-
+    
     # MS Office Application Meta Data
     ext = os.path.splitext(filePath)[1]
     if ext == ".docx" or ext == ".xlsx" or ext == ".pptx":   # Microsoft new file format (*.docx, *.xlsx, *.pptx*) (xml compatible)
