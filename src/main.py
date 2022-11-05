@@ -9,7 +9,6 @@ import pyautogui
 import pytz
 import hashlib
 import multiprocessing
-import sys
 import shutil
 import meta
 import subprocess
@@ -134,7 +133,7 @@ class FileLog(tk.Frame):
             time.sleep(0.1)
         self.populateData(controller)
 
-    # Populate table with take data, to remove before deployment
+    # Populate table
     def populateData(self, controller):
 
         self.fileTableFrame.grid_columnconfigure(0, weight=1)
@@ -170,6 +169,7 @@ class FileLog(tk.Frame):
 
         currentRowNo = self.rowNo.get()
 
+    # Set file submissibility
     def UpdateSubmissibility(self, rowNo, controller, submissibility):
         for item in controller.fileData:
             if item[0] == rowNo:
@@ -194,9 +194,7 @@ class FileLog(tk.Frame):
         
         curRow = 1
         #original data
-        #tk.Label(popup,text= data[4], wraplength=600).pack(fill="both")
         ogTitle = tk.Label(popup,text= "Original Metadata:", font=("Helvetica Bold",18))
-        # ogTitle.pack(fill="x")
         ogTitle.grid(row=curRow, column=0, sticky="ew")
 
         for key in data[4]:
@@ -205,10 +203,8 @@ class FileLog(tk.Frame):
             tk.Label(popup,text=data[4][key]).grid(row=curRow, column=1, sticky="ew")
 
         #current data
-        #tk.Label(popup,text= meta.fileMeta(data[1]), wraplength=600).pack(fill="both")
         curResult = meta.fileMeta(data[1])
         curTitle = tk.Label(popup,text= "Current Metadata:", font=("Helvetica Bold",18))
-        # curTitle.pack(fill="x")
         curTitle.grid(row=curRow, column=0, sticky="ew")
 
         for key in curResult:
@@ -447,7 +443,7 @@ class Controller(tk.Tk):
         #Create a Toplevel window
         loadingpopup= tk.Toplevel()
         loadingpopup.geometry("300x200")
-        #Loading percentage for entire program
+        #Loading popup for entire program
         tk.Label(loadingpopup,text= "Collecting hashes of all files...").pack(fill="both", expand=True)
         tk.Label(loadingpopup,text= "Please wait").pack(fill="both", expand=True) 
         loadingpopup.update()
