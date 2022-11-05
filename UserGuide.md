@@ -39,7 +39,7 @@ Next, the program will start to collect the hashes of all the files in the direc
 
 After that, the investigation will begin. Details such as the files investigated and time elapsed will be stated at the top of the GUI.
 
-![investigationStart](.\images\investigationStart.png)
+<img src="./images/investigationStart.png" alt="Investigation Start" style="zoom:80%;" />
 
 ### Event Log
 
@@ -73,7 +73,7 @@ Finally, you can take a screenshot to be tagged with a file by clicking on the "
 
 When you are finished investigating the folder, you may end the investigation by clicking on the "End Investigation" button highlighted below.
 
-![investigationEnd](.\images\investigationEnd.png)
+<img src="./images/investigationEnd.png" alt="Investigation End" style="zoom:80%;" />
 
 After ending the investigation, you will have to select the folder in which you would like to generate the report in. Click on the "Select Report Folder" to select the folder to save the report to.
 
