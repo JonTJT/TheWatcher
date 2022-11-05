@@ -1,9 +1,7 @@
 import os
-import glob
 import zipfile
 import xml.dom.minidom
 from datetime import datetime
-
 
 import dateutil.parser # pip install python-dateutil
 from dateutil import tz
@@ -49,10 +47,11 @@ Description:
 
 def allMeta(imgPath):
     filesMeta = []
-    for file in glob.iglob(imgPath+'/**/*.*',recursive = True):
-        result = fileMeta(file)
-        if result != None:
-            filesMeta.append(result)
+    for path, folders, files in os.walk(imgPath):
+        for file in files:
+            result = fileMeta(os.path.join(path, file))
+            if result != None:
+                filesMeta.append(result)
 
     # savetoCSV(filesMeta)
     return filesMeta

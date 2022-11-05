@@ -10,8 +10,7 @@ import pytz
 import hashlib
 import multiprocessing
 import sys
-import shutil 
-import glob
+import shutil
 import meta
 import subprocess
 from watchdog.observers import Observer
@@ -369,7 +368,7 @@ class Controller(tk.Tk):
         now = datetime.now()
         sgTime = pytz.timezone("Asia/Singapore")
         nowSgTime = sgTime.localize(now)
-        self.screenshotFolder = "TheWatcherScreenshots" + "_" + str(nowSgTime.strftime("%Y-%m-%d_%H.%M.%S"))
+        self.screenshotFolder = "TheWatcherScreenshots" + "_" + str(nowSgTime.strftime("%Y-%m-%d_%H-%M-%S"))
         os.mkdir(self.screenshotFolder)
 
         self.wm_title("The Watcher")
@@ -413,9 +412,11 @@ class Controller(tk.Tk):
     # File counter function to count number of files within folder and all subfolders. 
     def countFiles(self, filepath):
         counter = 0
-        for file in glob.iglob(filepath+'/**/*.*',recursive = True):
-            counter += 1
-            self.addNewFile(file)
+        for path, folders, files in os.walk(filepath):
+            for file in files:
+                counter += 1
+                self.addNewFile(os.path.join(path, file))
+                print(file)
         return counter
 
     def LoadingBar(self):
@@ -621,6 +622,7 @@ class Controller(tk.Tk):
                     newhtml.write(line)
             # Move screenshot folder
             shutil.move("./"+self.screenshotFolder, folderpath)
+
             exit()
             
     # To be called when a file has been successfully investigated.
