@@ -93,16 +93,16 @@ class FileLog(tk.Frame):
         self.rowNo.set(1)
 
         tk.Frame.__init__(self, parent)
-        tk.Button(self,text="View Event Log", command=lambda:[controller.ShowFrame(EventLog)]).pack(fill="both", expand=True)
-        tk.Button(self,text="View File Log", command=lambda:[controller.ShowFrame(FileLog)]).pack(fill="both", expand=True)
-        Title = tk.Label(self, text="File Log").pack(fill="both", expand=True)
-        tk.Label(self,textvariable= controller.investigatedFileCountString).pack(fill="both", expand=True)
-        tk.Label(self,textvariable= controller.selectedFolder).pack(fill="both", expand=True)
-        tk.Label(self,textvariable= controller.startTime).pack(fill="both", expand=True)
+        tk.Button(self,text="View Event Log", command=lambda:[controller.ShowFrame(EventLog)]).pack(fill="x")
+        tk.Button(self,text="View File Log", command=lambda:[controller.ShowFrame(FileLog)]).pack(fill="x")
+        Title = tk.Label(self, text="File Log").pack(fill="x")
+        tk.Label(self,textvariable= controller.investigatedFileCountString).pack(fill="x")
+        tk.Label(self,textvariable= controller.selectedFolder).pack(fill="x")
+        tk.Label(self,textvariable= controller.startTime).pack(fill="x")
 
         # Timer to track investigation
-        tk.Label(self,textvariable= controller.timer).pack(fill="both", expand=True)
-        tk.Button(self,text="End Investigation", command=lambda:[controller.EndInvestigation()]).pack(fill="both", expand=True)
+        tk.Label(self,textvariable= controller.timer).pack(fill="x")
+        tk.Button(self,text="End Investigation", command=lambda:[controller.EndInvestigation()]).pack(fill="x")
 
         # Create file table
         self.canvas = tk.Canvas(self, borderwidth=0, background="#FAF9F6")
@@ -249,16 +249,16 @@ class EventLog(tk.Frame):
         self.controller = controller
 
         tk.Frame.__init__(self, parent)
-        tk.Button(self,text="View Event Log", command=lambda:[controller.ShowFrame(EventLog)]).pack(fill="both", expand=True)
-        tk.Button(self,text="View File Log", command=lambda:[controller.ShowFrame(FileLog)]).pack(fill="both", expand=True)
-        Title = tk.Label(self, text="Event Log").pack(fill="both", expand=True)
-        tk.Label(self,textvariable= controller.investigatedFileCountString).pack(fill="both", expand=True)
-        tk.Label(self,textvariable= controller.selectedFolder).pack(fill="both", expand=True)
-        tk.Label(self,textvariable= controller.startTime).pack(fill="both", expand=True)
+        tk.Button(self,text="View Event Log", command=lambda:[controller.ShowFrame(EventLog)]).pack(fill="x")
+        tk.Button(self,text="View File Log", command=lambda:[controller.ShowFrame(FileLog)]).pack(fill="x")
+        Title = tk.Label(self, text="Event Log").pack(fill="x")
+        tk.Label(self,textvariable= controller.investigatedFileCountString).pack(fill="x")
+        tk.Label(self,textvariable= controller.selectedFolder).pack(fill="x")
+        tk.Label(self,textvariable= controller.startTime).pack(fill="x")
 
         # Timer to track investigation
-        tk.Label(self,textvariable= controller.timer).pack(fill="both", expand=True)
-        tk.Button(self,text="End Investigation", command=lambda:[controller.EndInvestigation()]).pack(fill="both", expand=True)
+        tk.Label(self,textvariable= controller.timer).pack(fill="x")
+        tk.Button(self,text="End Investigation", command=lambda:[controller.EndInvestigation()]).pack(fill="x")
 
         # Create file table
         self.canvas = tk.Canvas(self, borderwidth=0, background="#FAF9F6")
@@ -279,6 +279,11 @@ class EventLog(tk.Frame):
         tk.Label(self.eventsTableFrame, text="Time", anchor="w", background="#FAF9F6").grid(row=0, column=1, sticky="ew")
         tk.Label(self.eventsTableFrame, text="File name and path", anchor="w", background="#FAF9F6").grid(row=0, column=2, sticky="ew") 
         tk.Label(self.eventsTableFrame, text="Event", anchor="w", background="#FAF9F6").grid(row=0, column=3, sticky="ew")
+
+        self.eventsTableFrame.grid_columnconfigure(0, weight=1)
+        self.eventsTableFrame.grid_columnconfigure(1, weight=1)
+        self.eventsTableFrame.grid_columnconfigure(2, weight=2)
+        self.eventsTableFrame.grid_columnconfigure(3, weight=2)
         
     # To add a new event item:
     def addNewEvent(self, data):
@@ -294,8 +299,8 @@ class EventLog(tk.Frame):
 
         tk.Label(self.eventsTableFrame, text=data[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
         tk.Label(self.eventsTableFrame, text=data[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
-        tk.Label(self.eventsTableFrame, text=data[2], anchor="w", background="#FAF9F6", wraplength=200).grid(row=currentRowNo, column=2, sticky="ew")
-        tk.Label(self.eventsTableFrame, text=data[3], anchor="w", background="#FAF9F6", wraplength=200).grid(row=currentRowNo, column=3, sticky="ew")
+        tk.Label(self.eventsTableFrame, text=data[2], anchor="w", background="#FAF9F6", wraplength=400).grid(row=currentRowNo, column=2, sticky="ew")
+        tk.Label(self.eventsTableFrame, text=data[3], anchor="w", background="#FAF9F6", wraplength=400).grid(row=currentRowNo, column=3, sticky="ew")
         
         self.eventRowNo.set(currentRowNo+1)
 
