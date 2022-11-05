@@ -22,3 +22,8 @@ Jon - https://github.com/JonTJT <br>
 - Provide forensic investigators with an audit trial to bolster their credibility and accountability when presenting evidence
 - Help document the investigative process to help investigators
 - Provide a perspicuous view of the steps and finding of the investigation
+
+
+## Installation:
+1. Clone the latest version of the repository from the "main branch at https://github.com/JonTJT/TheWatcher/tree/main
+``` git clone "https://github.com/JonTJT/TheWatcher.git ```
