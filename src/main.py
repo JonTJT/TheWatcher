@@ -48,43 +48,50 @@ class MainMenu(tk.Frame):
             i = 1
 
 class MonitorFolder(FileSystemEventHandler):
-    def __init__(self, hash_dict, controller):
+    def __init__(self, hash_dict, eventLog):
         self.hash_dict = hash_dict
         print(self.hash_dict)
-        self.controller = controller
+        self.eventLog = eventLog
 
     def hash_file(self,file):
-        result = subprocess.check_output(f'certutil -hashfile "{file}" MD5', shell=True)
-        hash = result.splitlines()[1]
+        try:
+            result = subprocess.check_output(f'certutil -hashfile "{file}" MD5', shell=True)
+            hash = result.splitlines()[1]
+        except Exception as e:
+            print(e)
+            return ""
         return hash.decode('utf-8')
 
     def on_file_open(self, file):
         # Check if open or modified
         filehash = self.hash_file(file)
-        if filehash == self.hash_dict[file]:
-            print("Open file")
-        else:
-            self.hash_dict[file] = filehash
-            print("Modified file")
-            print(file)
-            self.controller.addNewEvent([file,"File Modified"])
+        try: 
+            if filehash != self.hash_dict[file]:
+                self.hash_dict[file] = filehash
+                print("Modified file")
+                print(file)
+                self.eventLog.addNewEvent([file,"File Modified"])
+        except Exception as e:
+            print("whoops, something went wrong:" , e)
 
-
-    #TODO: EXCEPTION HANDLING
     def on_created(self, event):
         print(event.src_path, event.event_type)
-        self.controller.addNewEvent([event.src_path,"File Created"])
+        self.hash_dict[event.src_path] = self.hash_file(event.src_path)
+        self.eventLog.addNewEvent([event.src_path,"File Created"])
 
-    #TODO: EXCEPTION HANDLING
     def on_modified(self, event):
         if os.path.isfile(event.src_path):
             self.on_file_open(event.src_path)
-        print(event.src_path, event.event_type)
 
-    #TODO: EXCEPTION HANDLING
     def on_deleted(self, event):
         print(event.src_path, event.event_type)
-        self.controller.addNewEvent([event.src_path,"File Deleted"])
+        self.eventLog.addNewEvent([event.src_path,"File Deleted"])
+
+    def on_moved(self,event):
+        print(event.src_path, event.event_type, event.dest_path)
+        self.hash_dict[event.dest_path] = self.hash_file(event.dest_path)
+        self.hash_dict.pop(event.src_path)
+        self.eventLog.addNewEvent([event.dest_path, f"{event.src_path} Moved to {event.dest_path}"])
 
 class FileLog(tk.Frame):
     def __init__(self, parent, controller):
@@ -158,11 +165,11 @@ class FileLog(tk.Frame):
 
             fileNo = tk.Label(self.fileTableFrame, text=row[0], anchor="w", background="#FAF9F6")
             fileNo.grid(row=currentRowNo, column=0, sticky="ew")
-            tk.Label(self.fileTableFrame, text=row[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
+            tk.Label(self.fileTableFrame, text=row[1], anchor="w", background="#FAF9F6", wraplength=200).grid(row=currentRowNo, column=1, sticky="ew")
             selectSubmissibility.set("Click to select")
             submissibility = tk.OptionMenu( self.fileTableFrame, selectSubmissibility, command= lambda submissibility = selectSubmissibility , itemno = currentRowNo :[self.UpdateSubmissibility(itemno, controller, submissibility)], *options)
             submissibility.grid(row=currentRowNo, column=2, sticky="ew")
-            tk.Label(self.fileTableFrame, textvariable=row[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
+            tk.Label(self.fileTableFrame, textvariable=row[3], anchor="w", background="#FAF9F6", wraplength=400).grid(row=currentRowNo, column=3, sticky="ew")
             tk.Button(self.fileTableFrame, text="Edit", command=lambda itemNo = currentRowNo:[self.addNotes(itemNo, controller)]).grid(row=currentRowNo, column=4, sticky="ew")
             tk.Button(self.fileTableFrame, text="View", command=lambda itemNo = currentRowNo:[self.viewChanges(itemNo, controller)]).grid(row=currentRowNo, column=5, sticky="ew")
             tk.Button(self.fileTableFrame, text="Take", command=lambda x=row[0]:[self.addScreenshot(x, controller)], background="#FAF9F6").grid(row=currentRowNo, column=6, sticky="ew")
@@ -247,6 +254,8 @@ class EventLog(tk.Frame):
         self.eventRowNo = tk.IntVar()
         self.eventRowNo.set(1)
 
+        self.eventData = []
+
         tk.Frame.__init__(self, parent)
         tk.Button(self,text="View Event Log", command=lambda:[controller.ShowFrame(EventLog)]).pack(fill="both", expand=True)
         tk.Button(self,text="View File Log", command=lambda:[controller.ShowFrame(FileLog)]).pack(fill="both", expand=True)
@@ -284,6 +293,23 @@ class EventLog(tk.Frame):
         # To remove: Test button to add new event
         #tk.Button(self.eventsTableFrame, text="Append", anchor="w", command=lambda:[self.addNewEvent(["testfile.mp3", "File opened"],controller)], background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
 
+    # To add a new event item:
+    def addNewEvent(self, data):
+        # Add timestamp and index to data
+        now = datetime.now()
+        data.insert(0,now.strftime("%d/%m/%Y %H:%M:%S"))
+        currentRowNo = self.eventRowNo.get()
+        data.insert(0,currentRowNo)
+
+        # Add the new data to the database
+        self.eventData.append(data)
+
+        tk.Label(self.eventsTableFrame, text=data[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
+        tk.Label(self.eventsTableFrame, text=data[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
+        tk.Label(self.eventsTableFrame, text=data[2], anchor="w", background="#FAF9F6", wraplength=200).grid(row=currentRowNo, column=2, sticky="ew")
+        tk.Label(self.eventsTableFrame, text=data[3], anchor="w", background="#FAF9F6", wraplength=200).grid(row=currentRowNo, column=3, sticky="ew")
+        
+        self.eventRowNo.set(currentRowNo+1)
 
     def UpdateSubmissibility(self, rowNo):
         return None
@@ -294,7 +320,7 @@ class EventLog(tk.Frame):
         self.eventsTableFrame.grid_columnconfigure(2, weight=3)
         self.eventsTableFrame.grid_columnconfigure(3, weight=1)
         # Populate table
-        for row in controller.eventData:
+        for row in self.eventData:
             self.submissibility = StringVar()
             currentRowNo = self.eventRowNo.get()
             tk.Label(self.eventsTableFrame, text=row[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
@@ -304,8 +330,6 @@ class EventLog(tk.Frame):
             self.eventRowNo.set(currentRowNo+1)
 
         currentRowNo = self.eventRowNo.get()
-
-    
 
     def onFrameConfigure(self, event):
         '''Reset the scroll region to encompass the inner frame'''
@@ -364,15 +388,6 @@ class Controller(tk.Tk):
         self.fileData = [
         ]
 
-        self.eventData = [
-            [1, "02/11/2022 19:21:05", "testfile.mp4", "File opened", tk.StringVar()],
-            [2, "02/11/2022 19:21:07", "testfile1.mp4", "File opened", tk.StringVar()],
-            [3, "02/11/2022 19:21:10", "testfile2.mp4", "File modified", tk.StringVar()],
-            [4, "02/11/2022 19:21:12", "testfile3.mp4", "File opened", tk.StringVar()],
-            [5, "02/11/2022 19:21:15", "testfile1.mp4", "File opened", tk.StringVar()],
-            [6, "02/11/2022 19:21:16", "testfile2.mp4", "File modified", tk.StringVar()],
-        ]
-
         # Create directory to save screenshots
         now = datetime.now()
         sgTime = pytz.timezone("Asia/Singapore")
@@ -389,10 +404,16 @@ class Controller(tk.Tk):
         # Dictionary of frames to manage the different pages
         self.frames = {}
 
-        for F in (MainMenu, EventLog, FileLog, Report):
+        for F in (MainMenu, FileLog, Report):
             frame = F(container, self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
+        
+        # Event Log 
+        frame = EventLog(container,self)
+        self.frames[EventLog] = frame
+        frame.grid(row=0, column=0, sticky="nsew")
+        self.eventLog = frame
 
         # Using a method to switch frames
         self.ShowFrame(MainMenu)
@@ -400,15 +421,18 @@ class Controller(tk.Tk):
     # To swap between frames
     def ShowFrame(self, cont):
         frame = self.frames[cont]
+        print(f"showframe, {cont} ")
         # raises the current frame to the top
         frame.tkraise()
-
+ 
     # Timer function for the investigation
-    def Timer(self, starttime):
+    def Timer(self, starttime, observer):
         while self.investigationActive.get() == True:
             currenttime = int(round(time.time() * 100)) - starttime
             self.timer.set('Time elapsed: {:02d}:{:02d}:{:02d}'.format((currenttime // 100) // 60 // 60, (currenttime // 100) // 60,(currenttime // 100) % 60))
             time.sleep(1)
+        observer.stop()
+        observer.join()
 
     # File counter function to count number of files within folder and all subfolders. 
     def countFiles(self, filepath):
@@ -427,10 +451,6 @@ class Controller(tk.Tk):
         self.startTime.set("Investigation start time: " + now.strftime("%d/%m/%Y %H:%M:%S"))
         starttime = int(round(time.time() * 100))
 
-        # Start timer thread
-        timerThread = threading.Thread(target=self.Timer, args=[starttime], daemon=True)
-        timerThread.start()
-
         # Set file count
         self.totalFileCount.set(self.countFiles(self.selectedFolder.get()))
         self.investigatedFileCountString.set("Files investigated: "+ "0/" + str(self.totalFileCount.get()))
@@ -438,22 +458,22 @@ class Controller(tk.Tk):
         #Hash all the files before investigation
         self.hashMultithreading(1)
 
-        event_handler = MonitorFolder(self.startHashDict, self)
+        event_handler = MonitorFolder(self.startHashDict, self.eventLog)
         observer = Observer()
         observer.schedule(event_handler, path=self.selectedFolder.get(), recursive=True)
         observer.start()
-        print("Monitoring started")
-        try:
-            while(True):
-                time.sleep(1)
-        except KeyboardInterrupt:
-            observer.stop()
-            observer.join()
+        print("Monitoring started")        
 
         self.selectedFolder.set("Selected folder: "+ self.selectedFolder.get())
 
+        # Start timer thread
+        timerThread = threading.Thread(target=self.Timer, args=[starttime, observer], daemon=True)
+        timerThread.start()
+
         self.investigationActive.set(True)
+        print("showframe")
         self.ShowFrame(EventLog)
+        print("asdasdasd showframe")
         
     def LoadingBar(self):
         #Create a Toplevel window
