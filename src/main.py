@@ -234,7 +234,7 @@ class FileLog(tk.Frame):
         time.sleep(0.5)
         controller.deiconify()
 
-    def onFrameConfigure(self):
+    def onFrameConfigure(self, event):
         '''Reset the scroll region to encompass the inner frame'''
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
