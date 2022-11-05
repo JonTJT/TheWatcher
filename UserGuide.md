@@ -4,10 +4,11 @@
 
 ## Table of Contents
   * [Installation](#installation)
-  * [User Guide for different Modules](#user-guide-for-different-modules)
-    + [Crawler](#crawler)
-    + [Processor](#processor)
-    + [GUI](#gui)
+  * [User Guide for The Watcher](#User Guide for The Watcher)
+    + [Starting an investigation](#Starting an investigation)
+    + [Event Log](#Event Log)
+    + [File Log](#File Log)
+    + [Ending the Investigation and Generate report](#Ending the Investigation and Generate report)
 
 ## Installation
 
