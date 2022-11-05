@@ -28,15 +28,22 @@ Description:
     Most of these meta data are manually typed, thus this python module helps to automates it.
     Data is retrieved from properties -> details tab
 
+    # FS Meta Data (copying the folder will update the File data and selecting that directory will yield dates that are recent)
+    # 1. Size (fsSize)
+    # 2. Create Date (fsCreated)
+    # 3. Last Modified Date (fsModified)
+    # 4. Last Access Date (fsAccess)
+    # 5. File Path (filePath)
+
     # __Origin Meta Data__
-    # 1. Creator (Author field)
-    # 2. Last modified by (Last saved by)
-    # 3. Creation Date (Content created)
-    # 4. Modified Date (Date last saved)
+    # 6. Creator (Author field)
+    # 7. Last modified by (Last saved by)
+    # 8. Creation Date (Content created)
+    # 9. Last Modified Date (Date last saved)
 
     # __Descript + Content Meta Data__
-    # 5. Title
-    # 6. Description
+    # 10. Title
+    # 11. Description
 '''
 
 def allMeta(imgPath):
@@ -50,21 +57,36 @@ def allMeta(imgPath):
     return filesMeta
 
 def fileMeta(filePath):
+
+    data = {}
+
+    # FS Meta Data
+    fsMeta = os.stat(filePath)
+    data['fsSize'] = str(fsMeta.st_size) + "bytes"
+    data['fsCreated'] = datetime.fromtimestamp(fsMeta.st_ctime, tz=tz.gettz("Asia/Singapore")).strftime("%d-%m-%Y %H:%M:%S")
+    data['fsModified'] = datetime.fromtimestamp(fsMeta.st_mtime, tz=tz.gettz("Asia/Singapore")).strftime("%d-%m-%Y %H:%M:%S")
+    data['fsAccess'] = datetime.fromtimestamp(fsMeta.st_atime, tz=tz.gettz("Asia/Singapore")).strftime("%d-%m-%Y %H:%M:%S")
+    data['filePath'] = filePath
+
+    # MS Office Application Meta Data
     ext = os.path.splitext(filePath)[1]
     if ext == ".docx" or ext == ".xlsx" or ext == ".pptx":   # Microsoft new file format (*.docx, *.xlsx, *.pptx*) (xml compatible)
-        return newMeta(filePath)
+        result = newMeta(filePath)
+        data |= result
+        return data
     elif ext == ".doc" or ext == ".xls" or ext == ".ppt":    # Microsoft old file format (*.doc, *.xls, *.ppt)
-        return oldMeta(filePath)
+        result = oldMeta(filePath)
+        data |= result
+        return data
     else:
-        return None
+        return data
 
 def newMeta(filePath):
     file = zipfile.ZipFile(filePath,'r')
     core = xml.dom.minidom.parseString(file.read('docProps/core.xml'))
     xml.dom.minidom.parseString(file.read('docProps/core.xml')).toprettyxml()
     
-    info = {} 
-    info['filePath'] = filePath
+    info = {}
 
     try:
         info['creator'] = core.getElementsByTagName('dc:creator')[0].childNodes[0].data
@@ -159,8 +181,9 @@ def oldMeta(filePath):
 #                 return
 
 # if __name__ == "__main__":
-#     result1 = allMeta("../../Test/")
+#     result1 = allMeta("Templates")
 #     print(result1)
-#     result2 = fileMeta("../../Test/presentation.pptx")
+#     # result2 = fileMeta("../../Test/presentation.pptx")
+#     result2 = fileMeta("Templates/presentation.pptx")
 #     print(result2)
  
