@@ -209,13 +209,13 @@ class FileLog(tk.Frame):
         curResult = meta.fileMeta(data[1])
         curTitle = tk.Label(popup,text= "Current Metadata:", font=("Helvetica Bold",18))
         # curTitle.pack(fill="x")
+        curRow += 1
         curTitle.grid(row=curRow, column=0, sticky="ew")
 
         for key in curResult:
             curRow += 1
             tk.Label(popup,text=key).grid(row=curRow, column=0, sticky="ew")
             tk.Label(popup,text=curResult[key]).grid(row=curRow, column=1, sticky="ew")
-
 
     # Edit the notes for the specific row
     def editNotes(self, popup, text, itemno, controller):

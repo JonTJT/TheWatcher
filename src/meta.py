@@ -86,6 +86,7 @@ def fileMeta(filePath):
     
     # MS Office Application Meta Data
     ext = os.path.splitext(filePath)[1]
+    print(ext)
     if ext == ".docx" or ext == ".xlsx" or ext == ".pptx":   # Microsoft new file format (*.docx, *.xlsx, *.pptx*) (xml compatible)
         result = newMeta(filePath)
         data |= result
@@ -98,12 +99,23 @@ def fileMeta(filePath):
         return data
 
 def newMeta(filePath):
-    file = zipfile.ZipFile(filePath,'r')
-    core = xml.dom.minidom.parseString(file.read('docProps/core.xml'))
-    xml.dom.minidom.parseString(file.read('docProps/core.xml')).toprettyxml()
     
     info = {}
 
+    file = zipfile.ZipFile(filePath,'r')
+    try:
+        core = xml.dom.minidom.parseString(file.read('docProps/core.xml'))
+    except:
+        info['creator'] =''
+        info['lastModifiedBy'] =''
+        info['creationDate'] =''
+        info['dateModified'] =''
+        info['title'] =''
+        info['description'] =''
+        return info
+    
+    xml.dom.minidom.parseString(file.read('docProps/core.xml')).toprettyxml()
+    
     try:
         info['creator'] = core.getElementsByTagName('dc:creator')[0].childNodes[0].data
     except:
