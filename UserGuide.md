@@ -39,7 +39,7 @@ Next, the program will start to collect the hashes of all the files in the direc
 
 After that, the investigation will begin. Details such as the files investigated and time elapsed will be stated at the top of the GUI.
 
-![investigationStart](D:\SIT STUFF\Year 2\ICT 2202 - Digital Forensics\TheWatcher\images\investigationStart.png)
+![investigationStart](.\images\investigationStart.png)
 
 ### Event Log
 
