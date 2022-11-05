@@ -436,7 +436,6 @@ class Controller(tk.Tk):
             for file in files:
                 counter += 1
                 self.addNewFile(os.path.join(path, file))
-                print(file)
         return counter
 
     def LoadingBar(self):
