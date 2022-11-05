@@ -92,32 +92,26 @@ def newMeta(filePath):
         info['creator'] = core.getElementsByTagName('dc:creator')[0].childNodes[0].data
     except:
         info['creator'] =''
-
     try:
         info['lastModifiedBy'] = core.getElementsByTagName('cp:lastModifiedBy')[0].childNodes[0].data
     except:
         info['lastModifiedBy'] =''
-
     try:
         d = dateutil.parser.isoparse(core.getElementsByTagName('dcterms:created')[0].childNodes[0].data).astimezone(tz.gettz("Asia/Singapore"))
         d.replace(tzinfo=tz.gettz("Asia/Singapore"))
         info['creationDate'] = d.strftime("%d-%m-%Y %H:%M:%S")
     except:
         info['creationDate'] =''
-
     try:
-        # tzinfo=tz.gettz("Asia/Singapore")
         d = dateutil.parser.isoparse(core.getElementsByTagName('dcterms:modified')[0].childNodes[0].data).astimezone(tz.gettz("Asia/Singapore"))
         d = d.replace(tzinfo=tz.gettz("Asia/Singapore"))
         info['dateModified'] = d.strftime("%d-%m-%Y %H:%M:%S")
     except:
         info['dateModified'] =''
-
     try:
         info['title'] = core.getElementsByTagName('dc:title')[0].childNodes[0].data
     except:
         info['title'] =''
-
     try:
         info['description'] = core.getElementsByTagName('dc:description')[0].childNodes[0].data
     except:
@@ -144,13 +138,30 @@ def oldMeta(filePath):
     # 'titles_of_parts', 'manager', 'company', 'links_dirty', 'chars_with_spaces', 
     # 'unused', 'shared_doc', 'link_base', 'hlinks', 'hlinks_changed', 'version', 
     # 'dig_sig', 'content_type', 'content_status', 'language', 'doc_version']
-
-    info['creator'] = getattr(meta, 'author').decode("utf-8") 
-    info['lastModifiedBy'] = getattr(meta, 'last_saved_by').decode("utf-8") 
-    info['creationDate'] = getattr(meta, 'create_time').strftime("%d-%m-%Y %H:%M:%S")
-    info['dateModified'] = getattr(meta, 'last_saved_time').strftime("%d-%m-%Y %H:%M:%S")
-    info['title'] = getattr(meta, 'title').decode("utf-8") 
-    info['description'] = getattr(meta, 'comments').decode("utf-8") 
+    try:
+        info['creator'] =  getattr(meta, 'author').decode("utf-8") 
+    except:
+        info['creator'] =''
+    try:
+        info['lastModifiedBy'] = getattr(meta, 'last_saved_by').decode("utf-8") 
+    except:
+        info['lastModifiedBy'] =''
+    try:
+        info['creationDate'] = getattr(meta, 'create_time').strftime("%d-%m-%Y %H:%M:%S")
+    except:
+        info['creationDate'] =''
+    try:
+        info['dateModified'] = getattr(meta, 'last_saved_time').strftime("%d-%m-%Y %H:%M:%S") 
+    except:
+        info['dateModified'] =''
+    try:
+        info['title'] = getattr(meta, 'title').decode("utf-8")  
+    except:
+        info['title'] =''
+    try:
+        info['description'] = getattr(meta, 'comments').decode("utf-8") 
+    except:
+        info['description'] =''
     
     return info
 
