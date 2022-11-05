@@ -86,7 +86,6 @@ def fileMeta(filePath):
     
     # MS Office Application Meta Data
     ext = os.path.splitext(filePath)[1]
-    print(ext)
     if ext == ".docx" or ext == ".xlsx" or ext == ".pptx":   # Microsoft new file format (*.docx, *.xlsx, *.pptx*) (xml compatible)
         result = newMeta(filePath)
         data |= result
@@ -102,9 +101,10 @@ def newMeta(filePath):
     
     info = {}
 
-    file = zipfile.ZipFile(filePath,'r')
     try:
+        file = zipfile.ZipFile(filePath,'r')
         core = xml.dom.minidom.parseString(file.read('docProps/core.xml'))
+        xml.dom.minidom.parseString(file.read('docProps/core.xml')).toprettyxml()
     except:
         info['creator'] =''
         info['lastModifiedBy'] =''
@@ -114,7 +114,6 @@ def newMeta(filePath):
         info['description'] =''
         return info
     
-    xml.dom.minidom.parseString(file.read('docProps/core.xml')).toprettyxml()
     
     try:
         info['creator'] = core.getElementsByTagName('dc:creator')[0].childNodes[0].data
@@ -222,9 +221,8 @@ def oldMeta(filePath):
 if __name__ == "__main__":
     # result1 = allMeta("Templates")
     # print(result1)
-    result2 = fileMeta("../../Test/presentation.pptx")
     # result2 = fileMeta("Templates/presentation.pptx")
-    for k in result2:
-        print(k)
-    print(result2)
+    # for k in result2:
+    #     print(k)
+    # print(result2)
  
