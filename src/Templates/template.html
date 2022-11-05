@@ -114,6 +114,8 @@
             text-align: left;
             padding: 8px;
             border: 2px solid rgb(50, 4, 4);
+            word-wrap: break-word;
+            max-width: 60em;
         }
 
         tr:nth-child(even) {
@@ -133,7 +135,7 @@
 </head>
 
 <body>
-    <div style=" overflow-y:auto;">
+    <div style="overflow-x:auto; overflow-y:auto;">
         <table>
             <h1> The Watcher report </h1>
             <!-- Enter investigation start time here -->
@@ -150,7 +152,7 @@
             <!-- File data -->
     </div>
 
-    <div style=" overflow-y:auto;">
+    <div style="overflow-x:auto; overflow-y:auto;">
         <table>
             <h3> Event Log </h3>
             <tr>

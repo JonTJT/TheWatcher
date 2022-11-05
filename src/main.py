@@ -50,7 +50,6 @@ class MainMenu(tk.Frame):
 class MonitorFolder(FileSystemEventHandler):
     def __init__(self, hash_dict, eventLog):
         self.hash_dict = hash_dict
-        print(self.hash_dict)
         self.eventLog = eventLog
 
     def hash_file(self,file):
@@ -68,14 +67,11 @@ class MonitorFolder(FileSystemEventHandler):
         try: 
             if filehash != self.hash_dict[file]:
                 self.hash_dict[file] = filehash
-                print("Modified file")
-                print(file)
                 self.eventLog.addNewEvent([file,"File Modified"])
         except Exception as e:
-            print("whoops, something went wrong:" , e)
+            print("Something went wrong:" , e)
 
     def on_created(self, event):
-        print(event.src_path, event.event_type)
         self.hash_dict[event.src_path] = self.hash_file(event.src_path)
         self.eventLog.addNewEvent([event.src_path,"File Created"])
 
@@ -84,11 +80,9 @@ class MonitorFolder(FileSystemEventHandler):
             self.on_file_open(event.src_path)
 
     def on_deleted(self, event):
-        print(event.src_path, event.event_type)
         self.eventLog.addNewEvent([event.src_path,"File Deleted"])
 
     def on_moved(self,event):
-        print(event.src_path, event.event_type, event.dest_path)
         self.hash_dict[event.dest_path] = self.hash_file(event.dest_path)
         self.hash_dict.pop(event.src_path)
         self.eventLog.addNewEvent([event.dest_path, f"{event.src_path} Moved to {event.dest_path}"])
@@ -159,7 +153,6 @@ class FileLog(tk.Frame):
 
         # Populate table
         for row in controller.fileData:
-            print("Filename", row[1])
             selectSubmissibility = StringVar()
             currentRowNo = self.rowNo.get()
 
@@ -241,7 +234,7 @@ class FileLog(tk.Frame):
         time.sleep(0.5)
         controller.deiconify()
 
-    def onFrameConfigure(self, event):
+    def onFrameConfigure(self):
         '''Reset the scroll region to encompass the inner frame'''
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
@@ -253,8 +246,7 @@ class EventLog(tk.Frame):
     def __init__(self, parent, controller):
         self.eventRowNo = tk.IntVar()
         self.eventRowNo.set(1)
-
-        self.eventData = []
+        self.controller = controller
 
         tk.Frame.__init__(self, parent)
         tk.Button(self,text="View Event Log", command=lambda:[controller.ShowFrame(EventLog)]).pack(fill="both", expand=True)
@@ -287,14 +279,10 @@ class EventLog(tk.Frame):
         tk.Label(self.eventsTableFrame, text="Time", anchor="w", background="#FAF9F6").grid(row=0, column=1, sticky="ew")
         tk.Label(self.eventsTableFrame, text="File name and path", anchor="w", background="#FAF9F6").grid(row=0, column=2, sticky="ew") 
         tk.Label(self.eventsTableFrame, text="Event", anchor="w", background="#FAF9F6").grid(row=0, column=3, sticky="ew")
-
-        self.populateData(controller)
-
-        # To remove: Test button to add new event
-        #tk.Button(self.eventsTableFrame, text="Append", anchor="w", command=lambda:[self.addNewEvent(["testfile.mp3", "File opened"],controller)], background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
-
+        
     # To add a new event item:
     def addNewEvent(self, data):
+        controller=self.controller
         # Add timestamp and index to data
         now = datetime.now()
         data.insert(0,now.strftime("%d/%m/%Y %H:%M:%S"))
@@ -302,7 +290,7 @@ class EventLog(tk.Frame):
         data.insert(0,currentRowNo)
 
         # Add the new data to the database
-        self.eventData.append(data)
+        controller.eventData.append(data)
 
         tk.Label(self.eventsTableFrame, text=data[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
         tk.Label(self.eventsTableFrame, text=data[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
@@ -313,23 +301,6 @@ class EventLog(tk.Frame):
 
     def UpdateSubmissibility(self, rowNo):
         return None
-
-    def populateData(self, controller):
-        self.eventsTableFrame.grid_columnconfigure(0, weight=1)
-        self.eventsTableFrame.grid_columnconfigure(1, weight=1)
-        self.eventsTableFrame.grid_columnconfigure(2, weight=3)
-        self.eventsTableFrame.grid_columnconfigure(3, weight=1)
-        # Populate table
-        for row in self.eventData:
-            self.submissibility = StringVar()
-            currentRowNo = self.eventRowNo.get()
-            tk.Label(self.eventsTableFrame, text=row[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
-            tk.Label(self.eventsTableFrame, text=row[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
-            tk.Label(self.eventsTableFrame, text=row[2], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=2, sticky="ew")
-            tk.Label(self.eventsTableFrame, text=row[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
-            self.eventRowNo.set(currentRowNo+1)
-
-        currentRowNo = self.eventRowNo.get()
 
     def onFrameConfigure(self, event):
         '''Reset the scroll region to encompass the inner frame'''
@@ -384,9 +355,9 @@ class Controller(tk.Tk):
         self.startHashDict = {}
         self.endHashDict = {}
 
-        # Data for filelog and event log (To remove data before deployment)
-        self.fileData = [
-        ]
+        # Data for filelog and event log 
+        self.fileData = []
+        self.eventData = []
 
         # Create directory to save screenshots
         now = datetime.now()
@@ -421,7 +392,6 @@ class Controller(tk.Tk):
     # To swap between frames
     def ShowFrame(self, cont):
         frame = self.frames[cont]
-        print(f"showframe, {cont} ")
         # raises the current frame to the top
         frame.tkraise()
  
@@ -471,9 +441,7 @@ class Controller(tk.Tk):
         timerThread.start()
 
         self.investigationActive.set(True)
-        print("showframe")
         self.ShowFrame(EventLog)
-        print("asdasdasd showframe")
         
     def LoadingBar(self):
         #Create a Toplevel window
@@ -528,15 +496,12 @@ class Controller(tk.Tk):
 
     # Multithreaded hashing of all files marked submissible
     def hashMultithreading(self, isStart):
-        # print(multiprocessing.cpu_count())
         pool = multiprocessing.Pool(4)
         for row in self.fileData:
             pool.apply_async(self.hashmd5(row[1], isStart))
         
         pool.close()
         pool.join()
-
-        print("Hashdict:", self.endHashDict)
 
     # Function to be threaded
     def hashmd5(self, file, isStart):
@@ -551,14 +516,13 @@ class Controller(tk.Tk):
             else:
                 self.endHashDict[file] = hash_md5.hexdigest()
             self.hashDictMutex.release()
-            # print(self.endHashDict[file]) # Debug
             
-
-# To be called when a file has been successfully investigated.
-def FileInvestigated(controller):
-    fileCount = controller.investigatedFileCount.get()+1
-    controller.investigatedFileCount.set(fileCount)
-    controller.investigatedFileCountString.set("Total files investigated: " + str(fileCount) + '/' + str(controller.totalFileCount.get()))
+    # To be called when a file has been successfully investigated.
+    def FileInvestigated(controller):
+        fileCount = controller.investigatedFileCount.get()+1
+        controller.investigatedFileCount.set(fileCount)
+        controller.investigatedFileCountString.set("Total files investigated: " + str(fileCount) + '/' + str(controller.totalFileCount.get()))
+        
     # Generate report of investigation
     def GenerateReport(self, folderpath):
         originalfolder = self.selectedFolder.get().replace("Selected folder: ", "")
@@ -589,7 +553,6 @@ def FileInvestigated(controller):
                                     lines.insert(i+1, "<td> None </td>")
                                     i+=1
                             else:
-                                print(data)
                                 lines.insert(i+1, "<td>" + str(len(data[x])) + "</td>")
                                 i+=1
                         if (len(data[5]) > 0):
