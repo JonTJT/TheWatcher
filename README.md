@@ -29,5 +29,5 @@ Jon - https://github.com/JonTJT <br>
 ``` git clone "https://github.com/JonTJT/TheWatcher.git ```
 2. After cloning the repository, go to the repository and install the requirements. <br>
 ``` pip install -r src/requirements.txt ```
-3. To run the program, run main.py in the src folder (Please take note to run the program from the src folder)
+3. To run the program, run main.py in the src folder (Please take note to run the program from the src folder) <br>
 ``` python main.py ```
