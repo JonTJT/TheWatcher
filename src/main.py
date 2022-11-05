@@ -187,11 +187,35 @@ class FileLog(tk.Frame):
             if item[0] == itemno:
                 data = item
                 break
-        tk.Label(popup,text= "Metadata Comparison").pack(fill="both")
-        tk.Label(popup,text= "Original Metadata:").pack(fill="x")
-        tk.Label(popup,text= data[4], wraplength=600).pack(fill="both")
-        tk.Label(popup,text= "Current Metadata:").pack(fill="x")
-        tk.Label(popup,text= meta.fileMeta(data[1]), wraplength=600).pack(fill="both")
+        
+        title = tk.Label(popup,text= "Metadata Comparison", font=("Helvetica Bold",18))
+        title.pack(fill="both")
+        title.grid(row=0, column=0, sticky="ew")
+        
+        curRow = 1
+        #original data
+        #tk.Label(popup,text= data[4], wraplength=600).pack(fill="both")
+        ogTitle = tk.Label(popup,text= "Original Metadata:", font=("Helvetica Bold",18))
+        # ogTitle.pack(fill="x")
+        ogTitle.grid(row=curRow, column=0, sticky="ew")
+
+        for key in data[4]:
+            curRow += 1
+            tk.Label(popup,text=key).grid(row=curRow, column=0, sticky="ew")
+            tk.Label(popup,text=data[4][key]).grid(row=curRow, column=1, sticky="ew")
+
+        #current data
+        #tk.Label(popup,text= meta.fileMeta(data[1]), wraplength=600).pack(fill="both")
+        curResult = meta.fileMeta(data[1])
+        curTitle = tk.Label(popup,text= "Current Metadata:", font=("Helvetica Bold",18))
+        # curTitle.pack(fill="x")
+        curTitle.grid(row=curRow, column=0, sticky="ew")
+
+        for key in curResult:
+            curRow += 1
+            tk.Label(popup,text=key).grid(row=curRow, column=0, sticky="ew")
+            tk.Label(popup,text=curResult[key]).grid(row=curRow, column=1, sticky="ew")
+
 
     # Edit the notes for the specific row
     def editNotes(self, popup, text, itemno, controller):

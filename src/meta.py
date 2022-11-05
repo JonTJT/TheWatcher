@@ -207,10 +207,12 @@ def oldMeta(filePath):
 
 #                 return
 
-# if __name__ == "__main__":
-#     result1 = allMeta("Templates")
-#     print(result1)
-#     # result2 = fileMeta("../../Test/presentation.pptx")
-#     result2 = fileMeta("Templates/presentation.pptx")
-#     print(result2)
+if __name__ == "__main__":
+    # result1 = allMeta("Templates")
+    # print(result1)
+    result2 = fileMeta("../../Test/presentation.pptx")
+    # result2 = fileMeta("Templates/presentation.pptx")
+    for k in result2:
+        print(k)
+    print(result2)
  
