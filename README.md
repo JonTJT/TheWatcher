@@ -25,5 +25,9 @@ Jon - https://github.com/JonTJT <br>
 
 
 ## Installation:
-1. Clone the latest version of the repository from the "main branch at https://github.com/JonTJT/TheWatcher/tree/main
+1. Clone the latest version of the repository from the "main branch at https://github.com/JonTJT/TheWatcher/tree/main<br>
 ``` git clone "https://github.com/JonTJT/TheWatcher.git ```
+2. After cloning the repository, go to the repository and install the requirements. <br>
+``` pip install -r src/requirements.txt ```
+3. To run the program, run main.py in the src folder
+``` python src/main.py ```
