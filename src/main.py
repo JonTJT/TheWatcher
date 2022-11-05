@@ -54,36 +54,44 @@ class MonitorFolder(FileSystemEventHandler):
         self.eventLog = eventLog
 
     def hash_file(self,file):
-        result = subprocess.check_output(f'certutil -hashfile "{file}" MD5', shell=True)
-        hash = result.splitlines()[1]
+        try:
+            result = subprocess.check_output(f'certutil -hashfile "{file}" MD5', shell=True)
+            hash = result.splitlines()[1]
+        except Exception as e:
+            print(e)
+            return ""
         return hash.decode('utf-8')
 
     def on_file_open(self, file):
         # Check if open or modified
         filehash = self.hash_file(file)
-        if filehash == self.hash_dict[file]:
-            print("Open file")
-        else:
-            self.hash_dict[file] = filehash
-            print("Modified file")
-            print(file)
-            self.eventLog.addNewEvent([file,"File Modified"])
+        try: 
+            if filehash != self.hash_dict[file]:
+                self.hash_dict[file] = filehash
+                print("Modified file")
+                print(file)
+                self.eventLog.addNewEvent([file,"File Modified"])
+        except Exception as e:
+            print("whoops, something went wrong:" , e)
 
-    #TODO: EXCEPTION HANDLING
     def on_created(self, event):
         print(event.src_path, event.event_type)
+        self.hash_dict[event.src_path] = self.hash_file(event.src_path)
         self.eventLog.addNewEvent([event.src_path,"File Created"])
 
-    #TODO: EXCEPTION HANDLING
     def on_modified(self, event):
         if os.path.isfile(event.src_path):
             self.on_file_open(event.src_path)
-        print(event.src_path, event.event_type)
 
-    #TODO: EXCEPTION HANDLING
     def on_deleted(self, event):
         print(event.src_path, event.event_type)
         self.eventLog.addNewEvent([event.src_path,"File Deleted"])
+
+    def on_moved(self,event):
+        print(event.src_path, event.event_type, event.dest_path)
+        self.hash_dict[event.dest_path] = self.hash_file(event.dest_path)
+        self.hash_dict.pop(event.src_path)
+        self.eventLog.addNewEvent([event.dest_path, f"{event.src_path} Moved to {event.dest_path}"])
 
 class FileLog(tk.Frame):
     def __init__(self, parent, controller):
@@ -284,8 +292,8 @@ class EventLog(tk.Frame):
 
         tk.Label(self.eventsTableFrame, text=data[0], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=0, sticky="ew")
         tk.Label(self.eventsTableFrame, text=data[1], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=1, sticky="ew")
-        tk.Label(self.eventsTableFrame, text=data[2], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=2, sticky="ew")
-        tk.Label(self.eventsTableFrame, text=data[3], anchor="w", background="#FAF9F6").grid(row=currentRowNo, column=3, sticky="ew")
+        tk.Label(self.eventsTableFrame, text=data[2], anchor="w", background="#FAF9F6", wraplength=200).grid(row=currentRowNo, column=2, sticky="ew")
+        tk.Label(self.eventsTableFrame, text=data[3], anchor="w", background="#FAF9F6", wraplength=200).grid(row=currentRowNo, column=3, sticky="ew")
         
         self.eventRowNo.set(currentRowNo+1)
 
