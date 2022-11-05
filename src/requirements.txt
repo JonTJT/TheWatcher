@@ -1,0 +1,5 @@
+olefile==0.46
+PyAutoGUI==0.9.52
+python_dateutil==2.8.2
+pytz==2020.4
+watchdog==2.1.9
