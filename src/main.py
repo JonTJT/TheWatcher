@@ -183,8 +183,10 @@ class FileLog(tk.Frame):
     def UpdateSubmissibility(self, rowNo, controller, submissibility):
         for item in controller.fileData:
             if item[0] == rowNo:
+                if item[2].get() == "":
+                    controller.FileInvestigated()
                 item[2].set(submissibility)
-        controller.FileInvestigated()
+        
 
     # Open up popup window to prompt investigator to view metadata changes
     def viewChanges(self, itemno, controller):
@@ -589,10 +591,10 @@ class Controller(tk.Tk):
             self.unreadableFileList.append([file,e])
 
     # To be called when a file has been successfully investigated.
-    def FileInvestigated(controller):
-        fileCount = controller.investigatedFileCount.get()+1
-        controller.investigatedFileCount.set(fileCount)
-        controller.investigatedFileCountString.set("Total files investigated: " + str(fileCount) + '/' + str(controller.totalFileCount.get()))
+    def FileInvestigated(self):
+        fileCount = self.investigatedFileCount.get()+1
+        self.investigatedFileCount.set(fileCount)
+        self.investigatedFileCountString.set("Total files investigated: " + str(fileCount) + '/' + str(self.totalFileCount.get()))
         
     # Generate report of investigation
     def GenerateReport(self, folderpath):
@@ -663,12 +665,6 @@ class Controller(tk.Tk):
             shutil.move("./"+self.screenshotFolder, folderpath)
 
             exit()
-            
-    # To be called when a file has been successfully investigated.
-    def FileInvestigated(self):
-        fileCount = self.investigatedFileCount.get()+1
-        self.investigatedFileCount.set(fileCount)
-        self.investigatedFileCountString.set("Total files investigated: " + str(fileCount) + '/' + str(self.totalFileCount.get()))
 
 if __name__ == "__main__":
     mainProgram = Controller()
