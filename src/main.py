@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import StringVar
 from tkinter import filedialog
+from tkinter import messagebox
 import time
 import os
 import threading
@@ -30,6 +31,14 @@ class MainMenu(tk.Frame):
     def FolderSelect(self, controller):
         self.startButton["state"] = "disabled"
         folderName = filedialog.askdirectory()
+
+        watcherfolder = os.getcwd().replace('\\', '/')
+        watcherfolder = watcherfolder[:1].upper() + watcherfolder[1:]
+
+        if (folderName in watcherfolder):
+            messagebox.showerror("Invalid folder", "The selected folder or its subfolders contain The Watcher's source files. Please select a different folder.")
+            return
+
         if os.path.isdir(folderName):
             self.folderSelected.set(True)
             controller.selectedFolder.set(folderName)
@@ -341,8 +350,11 @@ class Report(tk.Frame):
 
         self.reportFolderSelected = tk.BooleanVar()
         self.reportFolderSelected.set(False)
+        self.selectedReportFolder = tk.StringVar()
 
         Title = tk.Label(self, text="Investigation Report").pack(fill="both", expand=True)
+        tk.Label(self, text="Selected Folder").pack(fill="x")
+        tk.Label(self, textvariable=self.selectedReportFolder).pack(fill="x")
         tk.Button(self,text="Select Report Folder", command=lambda:[self.ReportFolderSelect(controller)]).pack(fill="both", expand=True)
         self.generateReport = tk.Button(self,state="disabled",text="Generate HTML report", command=lambda:[controller.GenerateReport(controller.selectedReportFolder.get())])
         self.generateReport.pack(fill="both", expand=True)
@@ -351,8 +363,16 @@ class Report(tk.Frame):
     def ReportFolderSelect(self, controller):
         self.generateReport["state"] = "disabled"
         folderName = filedialog.askdirectory()
+        watcherfolder = os.getcwd().replace('\\', '/')
+        watcherfolder = watcherfolder[:1].upper() + watcherfolder[1:]
+
+        if (watcherfolder in folderName):
+            messagebox.showerror('Invalid folder', 'The selected folder is in the same location as the program! Please select a different folder.')
+            return
+
         if os.path.isdir(folderName):
             self.reportFolderSelected.set(True)
+            self.selectedReportFolder.set(folderName)
             controller.selectedReportFolder.set(folderName)
         else:
             self.reportFolderSelected.set(False)
@@ -576,7 +596,6 @@ class Controller(tk.Tk):
         
     # Generate report of investigation
     def GenerateReport(self, folderpath):
-        originalfolder = self.selectedFolder.get().replace("Selected folder: ", "")
         with open('./Templates/template.html', 'r+') as f: 
             lines = f.readlines()
             for i, line in enumerate(lines):
