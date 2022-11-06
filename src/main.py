@@ -23,7 +23,7 @@ class MainMenu(tk.Frame):
         tk.Label(self,text="Select the folder that will be used in the investigation.").pack(fill="both", expand=True)
         tk.Label(self,textvariable= controller.selectedFolder).pack(fill="both", expand=True)
         tk.Button(self,text="Select Investigation Folder", command=lambda:[self.FolderSelect(controller)]).pack(fill="both", expand=True)
-        self.startButton = tk.Button(self,text="Begin Investigation", state="disabled", command=lambda:[controller.BeginInvestigation()])
+        self.startButton = tk.Button(self,text="Begin Investigation", state="disabled", command=lambda:[controller.BeginInvestigation(self.startButton)])
         self.startButton.pack(fill="both", expand=True)
 
     # Prompts user to select folder
@@ -451,8 +451,8 @@ class Controller(tk.Tk):
         checkProgressThread.start()
 
     # To start investigation
-    def BeginInvestigation(self):
-
+    def BeginInvestigation(self, button):
+        button["state"] = "disabled"
         time.sleep(2)
         self.LoadingBar()
         now = datetime.now()

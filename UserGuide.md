@@ -4,11 +4,11 @@
 
 ## Table of Contents
   * [Installation](#installation)
-  * [User Guide for The Watcher](#User Guide for The Watcher)
-    + [Starting an investigation](#Starting an investigation)
-    + [Event Log](#Event Log)
-    + [File Log](#File Log)
-    + [Ending the Investigation and Generate report](#Ending the Investigation and Generate report)
+  * [User Guide for The Watcher](#user-guide-for-the-watcher)
+    + [Starting an investigation](#starting-an-investigation)
+    + [Event Log](#event-log)
+    + [File Log](#file-log)
+    + [Ending the Investigation and Generate report](#ending-the-investigation-and-generate-report)
 
 ## Installation
 
@@ -39,33 +39,33 @@ Next, the program will start to collect the hashes of all the files in the direc
 
 After that, the investigation will begin. Details such as the files investigated and time elapsed will be stated at the top of the GUI.
 
-![investigationStart](D:\SIT STUFF\Year 2\ICT 2202 - Digital Forensics\TheWatcher\images\investigationStart.png)
+<img src="./images/investigationStart.png" alt="Investigation Start" style="zoom:80%;" />
 
 ### Event Log
 
 To view the Event Log, click on the "View Event Log" button as highlighted below. This will display all the file system events that have been captured by The Watcher.
 
-<img src="D:\SIT STUFF\Year 2\ICT 2202 - Digital Forensics\TheWatcher\images\eventLog.png" alt="eventLog" style="zoom:80%;" />
+<img src=".\images\eventLog.png" alt="eventLog" style="zoom:80%;" />
 
 ### File Log
 
 To view the File Log, click on the "View File Log" button as highlighted below. This will display all the files that are part of the investigation.
 
-<img src="D:\SIT STUFF\Year 2\ICT 2202 - Digital Forensics\TheWatcher\images\fileLog.png" alt="fileLog" style="zoom:80%;" />
+<img src=".\images\fileLog.png" alt="fileLog" style="zoom:80%;" />
 
 You can select the classification of the file by selecting the dropdown and selecting "Submissible" or "Non-Submissible"
 
-<img src="D:\SIT STUFF\Year 2\ICT 2202 - Digital Forensics\TheWatcher\images\submissible.png" alt="submissible" style="zoom:80%;" />
+<img src=".\images\submissible.png" alt="submissible" style="zoom:80%;" />
 
 You can also add/edit the notes for each file in the File Log by clicking on the "Edit" button beside the file.
 
-<img src="D:\SIT STUFF\Year 2\ICT 2202 - Digital Forensics\TheWatcher\images\addNotes.png" alt="addNotes" style="zoom:80%;"/>
+<img src=".\images\addNotes.png" alt="addNotes" style="zoom:80%;"/>
 
-<img src="D:\SIT STUFF\Year 2\ICT 2202 - Digital Forensics\TheWatcher\images\noteAdded.png" alt="noteAdded" style="zoom:80%;" />
+<img src=".\images\noteAdded.png" alt="noteAdded" style="zoom:80%;" />
 
 You can view the changes made to the metadata of the file by clicking on the "View" button beside the file.
 
- <img src="D:\SIT STUFF\Year 2\ICT 2202 - Digital Forensics\TheWatcher\images\viewChanges.png" alt="viewChanges" style="zoom:80%;" />
+ <img src=".\images\viewChanges.png" alt="viewChanges" style="zoom:80%;" />
 
 Finally, you can take a screenshot to be tagged with a file by clicking on the "Take" button beside the file. This will take a screenshot that can be viewed later when the report is generated.
 
@@ -73,16 +73,16 @@ Finally, you can take a screenshot to be tagged with a file by clicking on the "
 
 When you are finished investigating the folder, you may end the investigation by clicking on the "End Investigation" button highlighted below.
 
-![investigationEnd](D:\SIT STUFF\Year 2\ICT 2202 - Digital Forensics\TheWatcher\images\investigationEnd.png)
+<img src="./images/investigationEnd.png" alt="Investigation End" style="zoom:80%;" />
 
 After ending the investigation, you will have to select the folder in which you would like to generate the report in. Click on the "Select Report Folder" to select the folder to save the report to.
 
-<img src="D:\SIT STUFF\Year 2\ICT 2202 - Digital Forensics\TheWatcher\images\selectReportFolder.png" alt="selectReportFolder" style="zoom:80%;" />
+<img src=".\images\selectReportFolder.png" alt="selectReportFolder" style="zoom:80%;" />
 
-<img src="D:\SIT STUFF\Year 2\ICT 2202 - Digital Forensics\TheWatcher\images\selectFolderForReport.png" alt="selectFolderForReport" style="zoom:80%;" />
+<img src=".\images\selectFolderForReport.png" alt="selectFolderForReport" style="zoom:80%;" />
 
 Afterwards, the "Generate HTML report" button should become active. Click on it to generate the HTML report that will be stored in the folder specified.
 
-<img src="D:\SIT STUFF\Year 2\ICT 2202 - Digital Forensics\TheWatcher\images\generateReport.png" alt="generateReport" style="zoom:80%;" />
+<img src=".\images\generateReport.png" alt="generateReport" style="zoom:80%;" />
 
-<img src="D:\SIT STUFF\Year 2\ICT 2202 - Digital Forensics\TheWatcher\images\reportFolderHTML.png" alt="reportFolderHTML" style="zoom:80%;" />
+<img src=".\images\reportFolderHTML.png" alt="reportFolderHTML" style="zoom:80%;" />
