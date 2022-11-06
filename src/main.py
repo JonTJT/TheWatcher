@@ -78,6 +78,7 @@ class MonitorFolder(FileSystemEventHandler):
             self.on_file_open(event.src_path)
 
     def on_deleted(self, event):
+        self.hash_dict.pop(event.src_path)
         self.eventLog.addNewEvent([event.src_path,"File Deleted"])
 
     def on_moved(self,event):
