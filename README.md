@@ -15,7 +15,7 @@ Jon - https://github.com/JonTJT <br>
 - Monitor start and end time of investigation session
 - Log and show file system changes during investigation
 - Allow investigators to provide documentation when analysing files
-- Show what changed in file (hex compare)
+- Meta data comparison
 - Mark files and submissible or non-submissible evidence
 
 ## Benefits:
